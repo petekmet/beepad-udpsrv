@@ -27,7 +27,7 @@ socket.on('listening',function(){
 
 //emits after the socket is closed using socket.close();
 socket.on('close',function(){
-    console.log('Socket is closed !');
+    console.log('Socket is closed');
 });
 
 socket.bind(2222);

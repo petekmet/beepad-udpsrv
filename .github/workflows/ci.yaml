@@ -11,8 +11,8 @@ on:
 # Environment variables are defined so that they can be used throughout the job definitions.
 env:
   # env for container build
-  APP_NAME: 'petekmet/udpsrv'
-  CONTAINER_REGISTRY: 'docker.io'
+  APP_NAME: 'udpsrv'
+  CONTAINER_REGISTRY: 'docker.io/petekmet'
   DOCKERFILE_PATH: '.'
   TAG: '${{ github.run_id  }}'
   CONTAINER_REGISTRY_NAME: petekmet
