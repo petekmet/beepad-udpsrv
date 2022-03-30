@@ -1,0 +1,71 @@
+name: beepad-udpsrv-ci
+
+on:
+  push:
+    branches:
+    - master
+  
+  # Configure workflow to also support triggering manually
+  workflow_dispatch:
+
+# Environment variables are defined so that they can be used throughout the job definitions.
+env:
+  # env for container build
+  APP_NAME: 'petekmet/udpsrv'
+  CONTAINER_REGISTRY: 'docker.io'
+  DOCKERFILE_PATH: '.'
+  TAG: '${{ github.run_id  }}'
+  CONTAINER_REGISTRY_NAME: petekmet
+  CONTAINER_REGISTRY_REPO_NAME: udpsrv
+
+# Jobs define the actions that take place when code is pushed to the main branch
+jobs:
+
+  CI-build-set-versions:
+    name: Set versions
+    runs-on: ubuntu-latest
+    outputs: 
+      version: ${{ steps.version.outputs.version }}
+      branch: ${{ steps.branch.outputs.branch }}
+    steps:
+    # Set App version
+    - name: version
+      run: echo "::set-output name=version::$(date +'%Y-%m-%d.')${{ github.run_number }}"
+      id: version
+    # Set build branch name
+    - name: generate tag with branch name
+      run: echo "::set-output name=branch::${GITHUB_REF##*/}"
+      id: branch
+
+  CI-build-and-publish-docker-image:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    needs: CI-build-set-versions
+    steps:
+    # Checkout the repo
+    - name: Checkout repository
+      uses: actions/checkout@master
+
+    # Login to Container registry
+    - name: Log in to the Container registry
+      uses: docker/login-action@v1
+      with:
+        registry: ${{ env.CONTAINER_REGISTRY }}
+        username: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
+        password: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
+
+    # Diag print
+    - name: print version
+      run: echo ${{ needs.CI-build-set-versions.outputs.version }}
+
+    - name: print branch
+      run: echo ${{ needs.CI-build-set-versions.outputs.branch }}
+
+    # Container build and push to a Azure Container Registry (ACR)
+    - run: |
+        docker build . -t ${{ env.CONTAINER_REGISTRY }}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.version }}
+        docker push ${{ env.CONTAINER_REGISTRY }}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.version }}
+        docker tag ${{ env.CONTAINER_REGISTRY }}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.version }} ${{ env.CONTAINER_REGISTRY }}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.branch }}
+        docker push ${{ env.CONTAINER_REGISTRY }}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.branch }}
+        docker tag ${{ env.CONTAINER_REGISTRY }}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.branch }} ${{ env.CONTAINER_REGISTRY }}/${{ env.APP_NAME }}:latest
+        docker push ${{ env.CONTAINER_REGISTRY }}/${{ env.APP_NAME }}:latest
