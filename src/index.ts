@@ -31,8 +31,3 @@ socket.on('close',function(){
 });
 
 socket.bind(2222);
-
-setTimeout(function(){
-    var data = Buffer.from([0xDE, 0xAD, 0xBE, 0xEF]);
-    socket.send(data, 2223, "localhost");
-}, 10000);
