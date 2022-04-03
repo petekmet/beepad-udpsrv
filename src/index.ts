@@ -12,6 +12,9 @@ const socket = udp.createSocket("udp4");
 socket.on('message',function(msg: Buffer, info: AddressInfo){
     console.log('Data received from client : ' + msg.toString("hex"));
     console.log('Received %d bytes from %s:%d\n',msg.length, info.address, info.port);
+    var outMessage = Buffer.from('Some bytes');
+    socket.send(outMessage, info.port, info.address);
+    console.log("sent message %s", outMessage.toString("hex"));
 });
 
 //emits when socket is ready and listening for datagram msgs
@@ -20,7 +23,7 @@ socket.on('listening',function(){
     var port = address.port;
     var family = address.family;
     var ipaddr = address.address;
-    console.log('Server is listening at port' + port);
+    console.log('Server is listening at port ' + port);
     console.log('Server ip :' + ipaddr);
     console.log('Server is IP4/IP6 : ' + family);
 });
