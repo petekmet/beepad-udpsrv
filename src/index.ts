@@ -12,6 +12,7 @@ const socket = udp.createSocket("udp4");
 socket.on('message',function(msg: Buffer, info: AddressInfo){
     console.log('Data received from client : ' + msg.toString("hex"));
     console.log('Received %d bytes from %s:%d\n',msg.length, info.address, info.port);
+    socket.send("DEADBEEF", info.port, info.address);
 });
 
 //emits when socket is ready and listening for datagram msgs
