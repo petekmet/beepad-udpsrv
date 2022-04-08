@@ -12,7 +12,7 @@ const socket = udp.createSocket("udp4");
 socket.on('message',function(msg: Buffer, info: AddressInfo){
     console.log('Data received from client : ' + msg.toString("hex"));
     console.log('Received %d bytes from %s:%d\n',msg.length, info.address, info.port);
-    var outMessage = Buffer.from('Some bytes');
+    var outMessage = Buffer.from('Hello from AZURE server! '+new Date().toLocaleString());
     socket.send(outMessage, info.port, info.address);
     console.log("sent message %s", outMessage.toString("hex"));
 });
@@ -34,3 +34,4 @@ socket.on('close',function(){
 });
 
 socket.bind(2222);
+console.log("UDP server started");
