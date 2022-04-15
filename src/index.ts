@@ -10,11 +10,11 @@ type User = {
 const socket = udp.createSocket("udp4");
 // emits on new datagram msg
 socket.on('message',function(msg: Buffer, info: AddressInfo){
-    console.log('Data received from client : ' + msg.toString("hex"));
-    console.log('Received %d bytes from %s:%d\n',msg.length, info.address, info.port);
-    var outMessage = Buffer.from('Hello from AZURE server! '+new Date().toLocaleString());
+    console.log('Received packet: %d bytes from %s:%d',msg.length, info.address, info.port);
+    console.log('Data: ' + msg.toString("hex"));
+    var outMessage = Buffer.from('Hello from AKS on '+new Date().toLocaleString());
     socket.send(outMessage, info.port, info.address);
-    console.log("sent message %s", outMessage.toString("hex"));
+    console.log("Sent out response message %s\n", outMessage.toString("hex"));
 });
 
 //emits when socket is ready and listening for datagram msgs
