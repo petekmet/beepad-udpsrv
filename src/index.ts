@@ -14,7 +14,8 @@ socket.on('message',function(msg: Buffer, info: AddressInfo){
     console.log('Data: ' + msg.toString("hex"));
     var outMessage = Buffer.from('Hello from AKS on '+new Date().toLocaleString());
     socket.send(outMessage, info.port, info.address);
-    console.log("Sent out response message %s\n", outMessage.toString("hex"));
+    socket.send(outMessage, info.port, info.address);
+    console.log("Sent out response messages %s\n", outMessage.toString("hex"));
 });
 
 //emits when socket is ready and listening for datagram msgs
