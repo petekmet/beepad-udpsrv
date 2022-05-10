@@ -35,4 +35,4 @@ socket.on('close',function(){
 });
 
 socket.bind(2222);
-console.log("UDP server started, v1.0");
+console.log("UDP server started, v1.1");
