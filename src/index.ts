@@ -14,8 +14,9 @@ socket.on('message',function(msg: Buffer, info: AddressInfo){
     console.log('Data: ' + msg.toString("hex"));
     var outMessage = Buffer.from('Hello from AKS on '+new Date().toLocaleString());
     socket.send(outMessage, info.port, info.address);
-    socket.send(outMessage, info.port, info.address);
     console.log("Sent out response messages %s\n", outMessage.toString("hex"));
+    // socket.send(outMessage, info.port, info.address);
+    // console.log("Sent out response messages %s\n", outMessage.toString("hex"));
 });
 
 //emits when socket is ready and listening for datagram msgs
@@ -35,4 +36,4 @@ socket.on('close',function(){
 });
 
 socket.bind(2222);
-console.log("UDP server started, v1.1");
+console.log("UDP server started, v1.2");
