@@ -12,6 +12,7 @@ const extSensorPacket = new StructBuffer("extsensor", {
     sensorFlags: uint8_t,
 });
 export const uplinkPacket = new StructBuffer("uplink", {
+    deviceId: uint64_t,
     subscriberId: uint64_t,
     packetType: uint8_t,
     sequenceId: uint8_t,
