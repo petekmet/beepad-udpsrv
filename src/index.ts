@@ -30,14 +30,14 @@ uint64_t deviceId;      // 8 bytes, IMEI, max 18 446 744 073 709 551 615
 
 const socket = udp.createSocket("udp4");
 // emits on new datagram msg
-socket.on('message',function(msg: Buffer, info: AddressInfo){
-    console.log('Received packet: %d bytes from %s:%d',msg.length, info.address, info.port);
+socket.on('message', function (msg: Buffer, info: AddressInfo) {
+    console.log('Received packet: %d bytes from %s:%d', msg.length, info.address, info.port);
     console.log('Data: ' + msg.toString("hex"));
 
     const packet = uplinkPacket.decode(msg);
     console.log("decoded packet:\n", packet);
 
-    var outMessage = Buffer.from('Hello from AKS on '+new Date().toLocaleString());
+    var outMessage = Buffer.from('Hello from AKS on ' + new Date().toLocaleString());
     socket.send(outMessage, info.port, info.address);
     console.log("Sent out response messages %s\n", outMessage.toString("hex"));
     // socket.send(outMessage, info.port, info.address);
@@ -45,7 +45,7 @@ socket.on('message',function(msg: Buffer, info: AddressInfo){
 });
 
 //emits when socket is ready and listening for datagram msgs
-socket.on('listening',function(){
+socket.on('listening', function () {
     var address = socket.address();
     var port = address.port;
     var family = address.family;
@@ -56,7 +56,7 @@ socket.on('listening',function(){
 });
 
 //emits after the socket is closed using socket.close();
-socket.on('close',function(){
+socket.on('close', function () {
     console.log('Socket is closed');
 });
 
