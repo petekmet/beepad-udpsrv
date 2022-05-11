@@ -34,7 +34,7 @@ socket.on('message', function (msg: Buffer, info: AddressInfo) {
     console.log('Received packet: %d bytes from %s:%d', msg.length, info.address, info.port);
     console.log('Data: ' + msg.toString("hex"));
 
-    const packet = uplinkPacket.decode(msg);
+    const packet = uplinkPacket.decode(msg, true);
     console.log("decoded packet:\n", packet);
 
     var outMessage = Buffer.from('Hello from AKS on ' + new Date().toLocaleString());
@@ -61,6 +61,6 @@ socket.on('close', function () {
 });
 
 socket.bind(2222);
-console.log("UDP server started, v1.7.1");
+console.log("UDP server started, v1.7.2");
 
 export default socket;
