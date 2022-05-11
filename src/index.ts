@@ -37,11 +37,15 @@ socket.on('message', function (msg: Buffer, info: AddressInfo) {
     const packet = uplinkPacket.decode(msg, true);
     console.log("decoded packet:\n", packet);
 
-    var outMessage = Buffer.from('Hello from AKS on ' + new Date().toLocaleString());
-    socket.send(outMessage, info.port, info.address);
-    console.log("Sent out response messages %s\n", outMessage.toString("hex"));
-    // socket.send(outMessage, info.port, info.address);
-    // console.log("Sent out response messages %s\n", outMessage.toString("hex"));
+    if (packet.flags.downlinkRequest) {
+        var outMessage = Buffer.from('Hello from AKS on ' + new Date().toLocaleString());
+        socket.send(outMessage, info.port, info.address);
+        console.log("Sent out response messages %s\n", outMessage.toString("hex"));
+        // socket.send(outMessage, info.port, info.address);
+        // console.log("Sent out response messages %s\n", outMessage.toString("hex"));
+    } else {
+        console.log("No downlink requested");
+    }
 });
 
 //emits when socket is ready and listening for datagram msgs
