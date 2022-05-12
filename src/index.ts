@@ -65,6 +65,6 @@ socket.on('close', function () {
 });
 
 socket.bind(2222);
-console.log("UDP server started, v1.7.2");
+console.log("UDP server started, v1.7.3");
 
 export default socket;

@@ -16,6 +16,7 @@ export const uplinkPacket = new StructBuffer("uplink", {
     subscriberId: uint64_t,
     packetType: uint8_t,
     sequenceId: uint8_t,
+    measurementTimestamp: uint32_t,
     temperature: int16_t,
     humidity: uint8_t,
     pressure: uint16_t,
