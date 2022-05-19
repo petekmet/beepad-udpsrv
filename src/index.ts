@@ -41,8 +41,13 @@ socket.on('message', function (msg: Buffer, info: AddressInfo) {
         var outMessage = Buffer.from('Hello from AKS on ' + new Date().toLocaleString());
         socket.send(outMessage, info.port, info.address);
         console.log("Sent out response messages %s\n", outMessage.toString("hex"));
-        // socket.send(outMessage, info.port, info.address);
-        // console.log("Sent out response messages %s\n", outMessage.toString("hex"));
+        /*
+        setTimeout(() => {
+            socket.send(outMessage, info.port, info.address);
+            console.log("Sent out delayed response messages %s\n", outMessage.toString("hex"));
+        }, 250);
+        */
+        
     } else {
         console.log("No downlink requested");
     }
