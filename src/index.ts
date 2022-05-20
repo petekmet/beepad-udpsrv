@@ -1,5 +1,5 @@
 import { AddressInfo } from "net";
-import { uplinkPacket } from "./utils/structbuffer";
+import { downlinkPacket, unixtime, uplinkPacket } from "./utils/structbuffer";
 
 const udp = require("dgram");
 
@@ -38,16 +38,18 @@ socket.on('message', function (msg: Buffer, info: AddressInfo) {
     console.log("decoded packet:\n", packet);
 
     if (packet.flags.downlinkRequest) {
-        var outMessage = Buffer.from('Hello from AKS on ' + new Date().toLocaleString());
+        // create downlink packet when available or return current time
+        const header = downlinkPacket.encode({
+            deviceId: packet.deviceId,
+            subscriberId: packet.subscriberId,
+            packetType: 0,
+            packetLength: 4,
+        });
+        const payload = unixtime.encode({ timestamp: Math.trunc(Date.now() / 1000) });
+        const outMessage = Buffer.concat([Buffer.from(header.buffer), Buffer.from(payload.buffer)]);
         socket.send(outMessage, info.port, info.address);
         console.log("Sent out response messages %s\n", outMessage.toString("hex"));
-        /*
-        setTimeout(() => {
-            socket.send(outMessage, info.port, info.address);
-            console.log("Sent out delayed response messages %s\n", outMessage.toString("hex"));
-        }, 250);
-        */
-        
+
     } else {
         console.log("No downlink requested");
     }

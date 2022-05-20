@@ -47,3 +47,14 @@ export const bitFlags = bitFields(uint8_t, {
     reserved3: 7,
     reserved4: 8
 });
+
+export const downlinkPacket = new StructBuffer("downlinkHeader", {
+    deviceId: uint64_t,
+    subscriberId: uint64_t,
+    packetType: uint8_t,
+    packetLength: uint16_t
+});
+
+export const unixtime = new StructBuffer("timestamp", {
+    timestamp: uint32_t
+});
