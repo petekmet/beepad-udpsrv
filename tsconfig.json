@@ -5,6 +5,9 @@
         "allowSyntheticDefaultImports": true,
         "target": "es6",
         "noImplicitAny": true,
+        "experimentalDecorators": true, // datastore
+        "emitDecoratorMetadata": true, // datastore
+        "strictNullChecks": true, // datastore
         "moduleResolution": "node",
         "sourceMap": true,
         "outDir": "dist",

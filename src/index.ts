@@ -1,4 +1,5 @@
 import { AddressInfo } from "net";
+import { initDb } from "./utils/db";
 import { downlinkPacket, unixtime, uplinkPacket } from "./utils/structbuffer";
 
 const udp = require("dgram");
@@ -71,7 +72,8 @@ socket.on('close', function () {
     console.log('Socket is closed');
 });
 
+initDb();
 socket.bind(2222);
-console.log("UDP server started, v1.7.3");
+console.log("UDP server started, v1.7.4");
 
 export default socket;

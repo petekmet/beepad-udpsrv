@@ -1,17 +1,74 @@
 import { bitFields, int16_t, int8_t, StructBuffer, uint16_t, uint32_t, uint64_t, uint8_t } from "struct-buffer";
 
-export const batterySocPacket = new StructBuffer("batterysoc", {
+interface TimeStamp {
+    timestamp: number
+}
+
+interface BatterySoc {
+    batteryLevel: number,
+    status: number
+}
+
+interface ExtSensor {
+    deviceId: number[],
+    temperature: number,
+    humidity: number,
+    batteryLevel: number,
+    sensorStatus: number
+}
+
+interface UplinkFlags {
+    alert: boolean,
+    restart: boolean,
+    shutdown: boolean,
+    downlinkRequest: boolean,
+    reserved: number
+}
+
+interface UplinkPacket {
+    deviceId: number,
+    subscriberId: number,
+    packetType: number,
+    sequenceId: number,
+    measurementTimestamp: number,
+    temperature: number,
+    humidity: number,
+    pressure: number,
+    signalStrength: number,
+    weight0: number,
+    weight1: number,
+    weight2: number,
+    weight3: number,
+    batterySoc: BatterySoc,
+    extSensor: ExtSensor,
+    flags: UplinkFlags,
+    cmic: number
+}
+
+export const batterySocPacket = new StructBuffer<BatterySoc>("batterysoc", {
     batteryLevel: uint16_t,
     status: uint8_t,
 });
-const extSensorPacket = new StructBuffer("extsensor", {
+
+const extSensorPacket = new StructBuffer<ExtSensor>("extsensor", {
     deviceId: uint8_t[6],
     temperature: int16_t,
     humidity: uint8_t,
     batteryLevel: uint16_t,
     sensorFlags: uint8_t,
 });
-export const uplinkPacket = new StructBuffer("uplink", {
+
+
+
+export const uplinkFlags = bitFields(uint8_t, {
+    alert: 1,
+    restart: 1,
+    shutdown: 1,
+    downlinkRequest: 1,
+    reserved: 4
+});
+
+export const uplinkPacket = new StructBuffer<UplinkPacket>("uplink", {
     deviceId: uint64_t,
     subscriberId: uint64_t,
     packetType: uint8_t,
@@ -27,13 +84,7 @@ export const uplinkPacket = new StructBuffer("uplink", {
     weight3: int16_t,
     batterySoc: batterySocPacket,
     extSensor: extSensorPacket,
-    flags: bitFields(uint8_t, {
-        alert: 1,
-        restart: 1,
-        shutdown: 1,
-        downlinkRequest: 1,
-        reserved: 4
-    }),
+    flags: uplinkFlags,
     cmic: uint32_t,
 });
 
@@ -55,6 +106,6 @@ export const downlinkPacket = new StructBuffer("downlinkHeader", {
     packetLength: uint16_t
 });
 
-export const unixtime = new StructBuffer("timestamp", {
+export const unixtime = new StructBuffer<TimeStamp>("timestamp", {
     timestamp: uint32_t
 });

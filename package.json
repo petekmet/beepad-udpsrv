@@ -8,7 +8,9 @@
     "test": "tsc --module commonjs && jest dist/test/"
   },
   "dependencies": {
+    "@google-cloud/datastore": "^6.6.2",
     "struct-buffer": "^5.1.3",
+    "ts-datastore-orm": "^2.0.7",
     "ts-jest": "^28.0.2",
     "uuid": "^8.3.2"
   },

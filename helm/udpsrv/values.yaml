@@ -9,6 +9,22 @@ image:
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: "latest"
+  env:
+    - name: GOOGLE_SERVICE_ACCOUNT
+      value: /etc/udpsrv/google-service-account
+        
+volumeMounts:
+  - name: google-service-account
+    mountPath: /etc/udpsrv
+    readOnly: true
+
+volumes:
+  - name: google-service-account
+    secret:
+      secretName: datastore-secret
+      items:
+        - key: datastore-service-account
+          path: ./google-service-account
 
 imagePullSecrets:
   - name: dockeriocreds
