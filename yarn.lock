@@ -935,6 +935,11 @@ acorn@^8.4.1, acorn@^8.7.1:
   resolved "https://registry.yarnpkg.com/acorn/-/acorn-8.7.1.tgz#0197122c843d1bf6d0a5e83220a788f278f63c30"
   integrity sha512-Xx54uLJQZ19lKygFXOWsscKUbsBZW0CPykPhVQdhIeIwrbPmJzqeASDInc8nKBnp/JT6igTs82qPXz069H8I/A==
 
+aes-cmac@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/aes-cmac/-/aes-cmac-1.0.3.tgz#967d5f85ea3e4a0706deac12cd8b4c5688633483"
+  integrity sha512-D201msdnHbQlkw91uqjD5h0LtX//R2fRAh/f2tOs1C96J7QuIRn4b7aeN1mKZsO5No4H+MarABanapDdvCYayg==
+
 agent-base@6:
   version "6.0.2"
   resolved "https://registry.yarnpkg.com/agent-base/-/agent-base-6.0.2.tgz#49fff58577cfee3f37176feab4c22e00f86d7f77"

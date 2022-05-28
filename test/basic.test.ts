@@ -4,6 +4,7 @@ import { createConnection } from "ts-datastore-orm";
 import { downlinkPacket, unixtime, uplinkPacket } from "../src/utils/structbuffer";
 import { initDb } from "../src/utils/db";
 import { env } from "process";
+import { AesCmac } from "aes-cmac";
 
 describe("some test", () => {
     test("encoding", () => {
@@ -37,5 +38,15 @@ describe("some test", () => {
     test("datastore", async ()=> {
         env.GOOGLE_SERVICE_ACCOUNT = "./datastore-service-account.json";
         await initDb();
+    });
+
+    test("aes-cmac", () => {
+        const key = Buffer.from("046323FE0156003BD3034C1001E0AC67", "hex");
+        const message = Buffer.from("997417ACDEADBEEF", "hex");
+        const cmac = Buffer.from("F723330980D0C3895BBB360D2D036926", "hex");
+        
+        const aesCmac = new AesCmac(key);
+        const result = aesCmac.calculate(message);
+        expect(result.toString("hex")).toBe(cmac.toString("hex"));
     });
 });
