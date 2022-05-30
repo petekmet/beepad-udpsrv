@@ -36,7 +36,6 @@ describe("some test", () => {
     });
 
     test("datastore", async ()=> {
-        env.GOOGLE_SERVICE_ACCOUNT = "./datastore-service-account.json";
         await initDb();
     });
 

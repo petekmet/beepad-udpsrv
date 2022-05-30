@@ -1,7 +1,7 @@
 import { AddressInfo } from "net";
 import { initDb } from "./utils/db";
 import { downlinkPacket, unixtime, uplinkPacket } from "./utils/structbuffer";
-
+import express, { Express, Request, Response } from "express";
 const udp = require("dgram");
 
 /*
@@ -26,8 +26,12 @@ uint64_t deviceId;      // 8 bytes, IMEI, max 18 446 744 073 709 551 615
     uint8_t reserved : 4;
     uint32_t cmic; 
 */
+async function healthMethod(req: Request, res: Response) {
+    res.send("OK3");
+}
 
-
+const webserver: Express = express();
+webserver.route("/health").get(healthMethod);
 
 const socket = udp.createSocket("udp4");
 // emits on new datagram msg
@@ -75,5 +79,8 @@ socket.on('close', function () {
 initDb();
 socket.bind(2222);
 console.log("UDP server started, v1.7.4");
+webserver.listen(8080, () => {
+    console.log("⚡️[server]: web server is running");
+});
 
 export default socket;
