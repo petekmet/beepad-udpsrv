@@ -37,9 +37,9 @@ webserver.route("/health").get(healthMethod);
 const socket = udp.createSocket("udp4");
 // emits on new datagram msg
 socket.on('message', function (msg: Buffer, info: AddressInfo) {
-    console.log("Message received on %s", new Date());
-    console.log('%d bytes from %s:%d', msg.length, info.address, info.port);
-    console.log('Data: ' + msg.toString("hex"));
+    console.log("Inbound message on %s", new Date());
+    console.log("Received %d bytes from %s:%d", msg.length, info.address, info.port);
+    console.log("Data:", msg.toString("hex"));
     // verify cmac
     // extract device address
     // extract packet type
@@ -48,25 +48,23 @@ socket.on('message', function (msg: Buffer, info: AddressInfo) {
     // decode header
     // const packet = uplinkPacket.decode(msg, true);
     const packetHeader = uplinkPacketHeader.decode(msg, true);
-    console.log("decoded packet header:\n", packetHeader);
+    console.log("Decoded packet header:", packetHeader);
     // verify cmac
     const cmac = msg.subarray(msg.length-4); // Buffer.from("2cc95bb0", "hex");
-    console.log("received cmac:", cmac.toString("hex"));
     const cmacNumber = cmac.readInt32LE();
-    console.log("received cmacNumber:", cmacNumber);
     const aesCmac = new AesCmac(key);
     const result = aesCmac.calculate(msg.subarray(0,msg.length-4));
     const calculatedCmacNumber: number = result.subarray(0,4).readInt32LE();
     if(calculatedCmacNumber == cmacNumber) {
-        console.log("cmac ok");
+        console.log("Cmac ok");
     }else{
-        console.log("cmac verification failed");
+        console.log("Cmac verification failed");
     }
 
     if(packetHeader.packetType === 0){
         const packet = uplinkPacket.decode(new Uint8Array(msg.subarray(17)), true);
-        console.log("decoded packet type 0 (uplink packet):\n", packet);
-    
+        console.log("Decoded packet type 0 (uplink packet):\n", packet);
+        console.log("Measurement on", new Date(packet.measurementTimestamp*1000));
         if (packet.flags.downlinkRequest) {
             // create downlink packet when available or return current time
             const header = downlinkPacketHeader.encode({
@@ -106,7 +104,7 @@ initDb();
 socket.bind(2222);
 console.log("UDP server started, v1.7.5");
 webserver.listen(8080, () => {
-    console.log("web server is ⚡️running on 8080");
+    console.log("Web server is ⚡️running on 8080");
 });
 
 export default socket;

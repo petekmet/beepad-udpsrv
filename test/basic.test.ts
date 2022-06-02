@@ -27,6 +27,7 @@ describe("some test", () => {
         const decoded = uplinkPacket.decode(new Uint8Array(msg.subarray(17)), true);
         const extSens = decoded.extSensor;
         console.log("raw: ", msg.subarray(17).toString("hex"));
+        console.log("measurement timestamp ", new Date(decoded.measurementTimestamp*1000));
         console.log("decoded> ", decoded);
         expect(decoded.sequenceId).toBe(0x1E);
         expect(decoded.measurementTimestamp).toBe(1654164000);
