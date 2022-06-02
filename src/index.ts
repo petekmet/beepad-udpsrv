@@ -1,7 +1,8 @@
+import { AesCmac } from "aes-cmac";
+import express, { Express, Request, Response } from "express";
 import { AddressInfo } from "net";
 import { initDb } from "./utils/db";
-import { downlinkPacket, unixtime, uplinkPacket } from "./utils/structbuffer";
-import express, { Express, Request, Response } from "express";
+import { downlinkPacketHeader, unixtime, uplinkPacket, uplinkPacketHeader } from "./utils/structbuffer";
 const udp = require("dgram");
 
 /*
@@ -36,27 +37,52 @@ webserver.route("/health").get(healthMethod);
 const socket = udp.createSocket("udp4");
 // emits on new datagram msg
 socket.on('message', function (msg: Buffer, info: AddressInfo) {
-    console.log('Received packet: %d bytes from %s:%d', msg.length, info.address, info.port);
+    console.log("Message received on %s", new Date());
+    console.log('%d bytes from %s:%d', msg.length, info.address, info.port);
     console.log('Data: ' + msg.toString("hex"));
+    // verify cmac
+    // extract device address
+    // extract packet type
+    // extract cmac
+    // calculate cmac
+    // decode header
+    // const packet = uplinkPacket.decode(msg, true);
+    const packetHeader = uplinkPacketHeader.decode(msg, true);
+    console.log("decoded packet header:\n", packetHeader);
+    // verify cmac
+    const cmac = msg.subarray(msg.length-4); // Buffer.from("2cc95bb0", "hex");
+    console.log("received cmac:", cmac.toString("hex"));
+    const cmacNumber = cmac.readInt32LE();
+    console.log("received cmacNumber:", cmacNumber);
+    const aesCmac = new AesCmac(key);
+    const result = aesCmac.calculate(msg.subarray(0,msg.length-4));
+    const calculatedCmacNumber: number = result.subarray(0,4).readInt32LE();
+    if(calculatedCmacNumber == cmacNumber) {
+        console.log("cmac ok");
+    }else{
+        console.log("cmac verification failed");
+    }
 
-    const packet = uplinkPacket.decode(msg, true);
-    console.log("decoded packet:\n", packet);
-
-    if (packet.flags.downlinkRequest) {
-        // create downlink packet when available or return current time
-        const header = downlinkPacket.encode({
-            deviceId: packet.deviceId,
-            subscriberId: packet.subscriberId,
-            packetType: 0,
-            packetLength: 4,
-        });
-        const payload = unixtime.encode({ timestamp: Math.trunc(Date.now() / 1000) });
-        const outMessage = Buffer.concat([Buffer.from(header.buffer), Buffer.from(payload.buffer)]);
-        socket.send(outMessage, info.port, info.address);
-        console.log("Sent out response messages %s\n", outMessage.toString("hex"));
-
-    } else {
-        console.log("No downlink requested");
+    if(packetHeader.packetType === 0){
+        const packet = uplinkPacket.decode(msg.subarray(17), true);
+        console.log("decoded packet type 0 (uplink packet):\n", packet);
+    
+        if (packet.flags.downlinkRequest) {
+            // create downlink packet when available or return current time
+            const header = downlinkPacketHeader.encode({
+                deviceId: packetHeader.deviceId,
+                subscriberId: packetHeader.subscriberId,
+                packetType: 0,
+                packetLength: 4,
+            });
+            const payload = unixtime.encode({ timestamp: Math.trunc(Date.now() / 1000) });
+            const outMessage = Buffer.concat([Buffer.from(header.buffer), Buffer.from(payload.buffer)]);
+            socket.send(outMessage, info.port, info.address);
+            console.log("Sent out response messages %s\n", outMessage.toString("hex"));
+    
+        } else {
+            console.log("No downlink requested");
+        }
     }
 });
 
@@ -78,9 +104,11 @@ socket.on('close', function () {
 
 initDb();
 socket.bind(2222);
-console.log("UDP server started, v1.7.4");
+console.log("UDP server started, v1.7.5");
 webserver.listen(8080, () => {
-    console.log("⚡️[server]: web server is running");
+    console.log("web server is ⚡️running on 8080");
 });
 
 export default socket;
+
+const key = Buffer.from("CB4E3EA400309DAB656D8DBFE4B93F35", "hex");

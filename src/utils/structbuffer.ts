@@ -22,13 +22,11 @@ interface UplinkFlags {
     restart: boolean,
     shutdown: boolean,
     downlinkRequest: boolean,
+    lastDownlinkSuccess: boolean,
     reserved: number
 }
 
 interface UplinkPacket {
-    deviceId: number,
-    subscriberId: number,
-    packetType: number,
     sequenceId: number,
     measurementTimestamp: number,
     temperature: number,
@@ -45,6 +43,12 @@ interface UplinkPacket {
     cmic: number
 }
 
+interface UplinkPacketHeader {
+    deviceId: BigInt,
+    subscriberId: BigInt,
+    packetType: number
+}
+
 export const batterySocPacket = new StructBuffer<BatterySoc>("batterysoc", {
     batteryLevel: uint16_t,
     status: uint8_t,
@@ -58,20 +62,16 @@ const extSensorPacket = new StructBuffer<ExtSensor>("extsensor", {
     sensorFlags: uint8_t,
 });
 
-
-
 export const uplinkFlags = bitFields(uint8_t, {
     alert: 1,
     restart: 1,
     shutdown: 1,
     downlinkRequest: 1,
-    reserved: 4
+    lastDownlinkSuccess: 1,
+    reserved: 3
 });
 
 export const uplinkPacket = new StructBuffer<UplinkPacket>("uplink", {
-    deviceId: uint64_t,
-    subscriberId: uint64_t,
-    packetType: uint8_t,
     sequenceId: uint8_t,
     measurementTimestamp: uint32_t,
     temperature: int16_t,
@@ -99,7 +99,13 @@ export const bitFlags = bitFields(uint8_t, {
     reserved4: 8
 });
 
-export const downlinkPacket = new StructBuffer("downlinkHeader", {
+export const uplinkPacketHeader = new StructBuffer<UplinkPacketHeader>("uplinkHeader", {
+    deviceId: uint64_t,
+    subscriberId: uint64_t,
+    packetType: uint8_t
+});
+
+export const downlinkPacketHeader = new StructBuffer("downlinkHeader", {
     deviceId: uint64_t,
     subscriberId: uint64_t,
     packetType: uint8_t,

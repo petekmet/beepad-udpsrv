@@ -1,14 +1,12 @@
 
-import { sbytes as b } from "struct-buffer";
-import { createConnection } from "ts-datastore-orm";
-import { downlinkPacket, unixtime, uplinkPacket } from "../src/utils/structbuffer";
-import { initDb } from "../src/utils/db";
-import { env } from "process";
 import { AesCmac } from "aes-cmac";
+import { sbytes as b } from "struct-buffer";
+import { initDb } from "../src/utils/db";
+import { downlinkPacketHeader, unixtime, uplinkPacket, uplinkPacketHeader } from "../src/utils/structbuffer";
 
 describe("some test", () => {
     test("encoding", () => {
-        const encoded = downlinkPacket.encode({
+        const encoded = downlinkPacketHeader.encode({
             deviceId: 0x123456789abcdef0,
             subscriberId: 0x123456789abcdef0,
             packetType: 0,
@@ -23,8 +21,8 @@ describe("some test", () => {
         expect(concated.toString("hex")).toBe("123456789abcdf00123456789abcdf00000004" + dateNow.toString(16));
     });
 
-    test("decoding", () => {
-        const rawHexaString = "00000000000000000000000000000000003201000000050025da030000000000000000000000000000000000000000000000000804030201";
+    test("decoding", () => { //000313CF8B853B16
+        const rawHexaString = "3201000000050025da030000000000000000000000000000000000000000000000000804030201";
         const decoded = uplinkPacket.decode(b(rawHexaString), true);
         const extSens = decoded.extSensor;
         console.log("decoded> ", decoded);
@@ -32,20 +30,40 @@ describe("some test", () => {
         expect(decoded.measurementTimestamp).toBe(1);
         expect(decoded.temperature).toBe(5);
         expect(decoded.cmic).toBe(0x01020304);
-        createConnection
     });
 
-    test("datastore", async ()=> {
-        await initDb();
+    test("decodeUplinkHeader", () => {
+        const rawHexaString = "163B858BCF130300816DBDDFD2330300013201000000050025da030000000000000000000000000000000000000000000000000804030201";
+        const decodedHeader = uplinkPacketHeader.decode(b(rawHexaString), true);
+        expect(decodedHeader.deviceId.toString()).toBe("866207050054422");
+        expect(decodedHeader.subscriberId.toString()).toBe("901405720014209");
+        expect(decodedHeader.packetType).toBe(1);
+        console.log("bum:",Buffer.from(rawHexaString,"hex").subarray(17).toString("hex"));
     });
+
+    // test("datastore", async ()=> {
+    //     await initDb();
+    // });
 
     test("aes-cmac", () => {
         const key = Buffer.from("046323FE0156003BD3034C1001E0AC67", "hex");
         const message = Buffer.from("997417ACDEADBEEF", "hex");
         const cmac = Buffer.from("F723330980D0C3895BBB360D2D036926", "hex");
-        
         const aesCmac = new AesCmac(key);
         const result = aesCmac.calculate(message);
         expect(result.toString("hex")).toBe(cmac.toString("hex"));
+    });
+
+    test("aes-cmac-from-device", ()=>{
+        const key = Buffer.from("CB4E3EA400309DAB656D8DBFE4B93F35", "hex");
+        const message = Buffer.from("0000000000000000ffffff7f00000000000030b79762d50024da039b0000000000000000011101000000000000000000000000082cc95bb0", "hex");
+        const cmac = message.subarray(message.length-4); // Buffer.from("2cc95bb0", "hex");
+        console.log("cmac:", cmac.toString("hex"));
+        const cmacNumber = cmac.readInt32LE();
+        console.log("cmacNumber:", cmacNumber);
+        const aesCmac = new AesCmac(key);
+        const result = aesCmac.calculate(message.subarray(0,message.length-4));
+        const calculatedCmacNumber: number = result.subarray(0,4).readInt32LE();
+        expect(calculatedCmacNumber).toBe(cmacNumber);
     });
 });
