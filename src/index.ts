@@ -64,7 +64,7 @@ socket.on('message', function (msg: Buffer, info: AddressInfo) {
     }
 
     if(packetHeader.packetType === 0){
-        const packet = uplinkPacket.decode(msg.subarray(17), true);
+        const packet = uplinkPacket.decode(new Uint8Array(msg.subarray(17)), true);
         console.log("decoded packet type 0 (uplink packet):\n", packet);
     
         if (packet.flags.downlinkRequest) {
