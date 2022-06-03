@@ -47,7 +47,7 @@ socket.on('message', function (msg: Buffer, info: AddressInfo) {
     // calculate cmac
     // decode header
     // const packet = uplinkPacket.decode(msg, true);
-    const packetHeader = uplinkPacketHeader.decode(msg, true);
+    const packetHeader = uplinkPacketHeader.decode(msg, false);
     console.log("Decoded packet header:", packetHeader);
     // verify cmac
     const cmac = msg.subarray(msg.length-4); // Buffer.from("2cc95bb0", "hex");
@@ -61,10 +61,11 @@ socket.on('message', function (msg: Buffer, info: AddressInfo) {
         console.log("Cmac verification failed");
     }
 
+    const packetPayload = msg.subarray(17);
     if(packetHeader.packetType === 0){
-        const packet = uplinkPacket.decode(new Uint8Array(msg.subarray(17)), true);
-        console.log("Decoded packet type 0 (uplink packet):\n", packet);
+        const packet = uplinkPacket.decode(new Uint8Array(packetPayload), true);
         console.log("Measurement on", new Date(packet.measurementTimestamp*1000));
+        console.log("Decoded packet type 0 (uplink packet):\n", packet);
         if (packet.flags.downlinkRequest) {
             // create downlink packet when available or return current time
             const header = downlinkPacketHeader.encode({
