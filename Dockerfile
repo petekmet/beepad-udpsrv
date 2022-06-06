@@ -15,7 +15,7 @@ FROM node:slim
 RUN mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
 WORKDIR /home/node/app
 COPY package*.json ./
-RUN npm install --production
+RUN npm install --omit=dev
 USER node
 COPY --from=builder /home/node/app/dist ./dist
 # COPY --chown=node:node .env .
