@@ -22,4 +22,5 @@ COPY --from=builder /home/node/app/dist ./dist
 # COPY --chown=node:node  /config ./config
 # COPY --chown=node:node  /public ./public
 EXPOSE 2222/udp
+EXPOSE 8080/tcp
 CMD [ "node", "dist/index.js" ]

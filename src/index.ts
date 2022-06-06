@@ -2,7 +2,7 @@ import { AesCmac } from "aes-cmac";
 import express, { Express, Request, Response } from "express";
 import { AddressInfo } from "net";
 import { initDb } from "./utils/db";
-import { downlinkPacketHeader, unixtime, uplinkPacket, uplinkPacketHeader } from "./utils/structbuffer";
+import { downlinkPacketHeader, downlinkSetSensorPacket, unixtime, uplinkPacket, uplinkPacketHeader } from "./utils/structbuffer";
 const udp = require("dgram");
 
 /*
@@ -27,16 +27,46 @@ uint64_t deviceId;      // 8 bytes, IMEI, max 18 446 744 073 709 551 615
     uint8_t reserved : 4;
     uint32_t cmic; 
 */
+
+var lastDeviceIpAddress: string;
+var lastDevicePort: number;
+
 async function healthMethod(req: Request, res: Response) {
     res.send("OK3");
 }
 
+async function sendMessageToDevice(req: Request, res: Response) {   
+    const key = Buffer.from("CB4E3EA400309DAB656D8DBFE4B93F35", "hex");
+    const aesCmac = new AesCmac(key);
+    
+    const header = downlinkPacketHeader.encode({
+        deviceId: 0,
+        subscriberId: 0,
+        packetType: 1,
+        packetLength: 6,
+    });
+    const payload = downlinkSetSensorPacket.encode({
+        deviceId: [0xDE, 0xAD, 0xBE, 0xEF, 0x01, 0x02],
+    });
+    const outMessage = Buffer.concat([Buffer.from(header.buffer), Buffer.from(payload.buffer)]);
+
+    const result = aesCmac.calculate(outMessage);
+    const messageWithCmac = Buffer.concat([outMessage, result]);
+
+    socket.send(messageWithCmac, lastDeviceIpAddress, lastDevicePort);
+    console.log("Sent out response messages %s\n", messageWithCmac.toString("hex"));
+    res.send(messageWithCmac.toString("hex"));
+}
+
 const webserver: Express = express();
 webserver.route("/health").get(healthMethod);
+webserver.route("/devmsg").get(sendMessageToDevice);
 
 const socket = udp.createSocket("udp4");
 // emits on new datagram msg
 socket.on('message', function (msg: Buffer, info: AddressInfo) {
+    lastDeviceIpAddress = info.address;
+    lastDevicePort = info.port;
     console.log("Inbound message on %s", new Date());
     console.log("Received %d bytes from %s:%d", msg.length, info.address, info.port);
     console.log("Data:", msg.toString("hex"));
@@ -47,7 +77,7 @@ socket.on('message', function (msg: Buffer, info: AddressInfo) {
     // calculate cmac
     // decode header
     // const packet = uplinkPacket.decode(msg, true);
-    const packetHeader = uplinkPacketHeader.decode(msg, false);
+    const packetHeader = uplinkPacketHeader.decode(msg, true);
     console.log("Decoded packet header:", packetHeader);
     // verify cmac
     const cmac = msg.subarray(msg.length-4); // Buffer.from("2cc95bb0", "hex");

@@ -88,6 +88,10 @@ export const uplinkPacket = new StructBuffer<UplinkPacket>("uplink", {
     cmic: uint32_t,
 });
 
+export const downlinkSetSensorPacket = new StructBuffer("downlinksetsensor", {
+    deviceId: uint8_t[6]
+});
+
 export const bitFlags = bitFields(uint8_t, {
     shutdown: 1,
     downlinkRequest: 2,

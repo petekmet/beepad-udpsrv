@@ -11,5 +11,9 @@ spec:
       targetPort: 2222
       protocol: UDP
       name: udpsrv
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+      name: udpsrv
   selector:
     {{- include "udpsrv.selectorLabels" . | nindent 4 }}
