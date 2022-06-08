@@ -51,7 +51,7 @@ async function sendMessageToDevice(req: Request, res: Response) {
     const outMessage = Buffer.concat([Buffer.from(header.buffer), Buffer.from(payload.buffer)]);
 
     const result = aesCmac.calculate(outMessage);
-    const messageWithCmac = Buffer.concat([outMessage, result]);
+    const messageWithCmac = Buffer.concat([outMessage, result.subarray(0,4)]);
 
     socket.send(messageWithCmac, lastDevicePort, lastDeviceIpAddress);
     console.log("Sent out response messages %s\n", messageWithCmac.toString("hex"));
@@ -133,7 +133,7 @@ socket.on('close', function () {
 
 initDb();
 socket.bind(2222);
-console.log("UDP server started, v1.7.5");
+console.log("UDP server started, v1.7.6");
 webserver.listen(8080, () => {
     console.log("Web server is ⚡️running on 8080");
 });

@@ -54,12 +54,17 @@ export const batterySocPacket = new StructBuffer<BatterySoc>("batterysoc", {
     status: uint8_t,
 });
 
+export const extSensorBitFlags = bitFields(uint8_t, {
+    sensorFound: 1,
+    reserved: 7
+});
+
 const extSensorPacket = new StructBuffer<ExtSensor>("extsensor", {
     deviceId: uint8_t[6],
     temperature: int16_t,
     humidity: uint8_t,
     batteryLevel: uint16_t,
-    sensorFlags: uint8_t,
+    sensorFlags: extSensorBitFlags
 });
 
 export const uplinkFlags = bitFields(uint8_t, {
