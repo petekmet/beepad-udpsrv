@@ -36,9 +36,7 @@ async function healthMethod(req: Request, res: Response) {
 }
 
 async function sendMessageToDevice(req: Request, res: Response) {   
-    const key = Buffer.from("CB4E3EA400309DAB656D8DBFE4B93F35", "hex");
     const aesCmac = new AesCmac(key);
-    
     const header = downlinkPacketHeader.encode({
         deviceId: 0,
         subscriberId: 0,
@@ -46,7 +44,7 @@ async function sendMessageToDevice(req: Request, res: Response) {
         packetLength: 6,
     });
     const payload = downlinkSetSensorPacket.encode({
-        deviceId: [0xDE, 0xAD, 0xBE, 0xEF, 0x01, 0x02],
+        deviceId: [0xF0, 0x77, 0xDD, 0x31, 0xEB, 0x17],
     });
     const outMessage = Buffer.concat([Buffer.from(header.buffer), Buffer.from(payload.buffer)]);
 
@@ -89,9 +87,10 @@ socket.on('message', function (msg: Buffer, info: AddressInfo) {
         console.log("Cmac ok");
     }else{
         console.log("Cmac verification failed");
+        return;
     }
 
-    const packetPayload = msg.subarray(17);
+    const packetPayload = msg.subarray(17); // skip header at pos 17
     if(packetHeader.packetType === 0){
         const packet = uplinkPacket.decode(new Uint8Array(packetPayload), true);
         console.log("Measurement on", new Date(packet.measurementTimestamp*1000));

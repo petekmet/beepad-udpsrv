@@ -47,10 +47,10 @@ describe("some test", () => {
     //     await initDb();
     // });
 
-    test("aes-cmac", () => {
-        const key = Buffer.from("046323FE0156003BD3034C1001E0AC67", "hex");
-        const message = Buffer.from("997417ACDEADBEEF", "hex");
-        const cmac = Buffer.from("F723330980D0C3895BBB360D2D036926", "hex");
+    test("aes-cmac", () => { 
+        const key = Buffer.from("CB4E3EA400309DAB656D8DBFE4B93F35", "hex");
+        const message = Buffer.from("000313cf8b853b16000333d2dfbd6d81000004107da062506f1c01", "hex");
+        const cmac = Buffer.from("3ea746d03245bb7d2fbae4b99ccd4004", "hex");
         const aesCmac = new AesCmac(key);
         const result = aesCmac.calculate(message);
         expect(result.toString("hex")).toBe(cmac.toString("hex"));
