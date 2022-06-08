@@ -108,7 +108,7 @@ socket.on('message', function (msg: Buffer, info: AddressInfo) {
             const message = Buffer.concat([Buffer.from(header.buffer), Buffer.from(payload.buffer)]);
             const aesCmac = new AesCmac(key);
             const cmac = aesCmac.calculate(message);
-            const outMessage = Buffer.concat([message, cmac.subarray(0,4)]);
+            const outMessage = Buffer.concat([message, cmac.subarray(0,4).reverse()]);
             socket.send(outMessage, info.port, info.address);
             console.log("Sent out response messages %s\n", outMessage.toString("hex"));
     
