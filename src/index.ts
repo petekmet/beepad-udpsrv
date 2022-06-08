@@ -44,8 +44,8 @@ async function sendMessageToDevice(req: Request, res: Response) {
         packetLength: 6,
     });
     const payload = downlinkSetSensorPacket.encode({
-        //deviceId: [0xF0, 0x77, 0xDD, 0x31, 0xEB, 0x17],
-        deviceId: [0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+        deviceId: [0xF0, 0x77, 0xDD, 0x31, 0xEB, 0x17]
+        // deviceId: [0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
     });
     const outMessage = Buffer.concat([Buffer.from(header.buffer), Buffer.from(payload.buffer)]);
 
@@ -53,7 +53,7 @@ async function sendMessageToDevice(req: Request, res: Response) {
     const messageWithCmac = Buffer.concat([outMessage, result.subarray(0,4)]);
 
     socket.send(messageWithCmac, lastDevicePort, lastDeviceIpAddress);
-    console.log("Sent to", lastDeviceIpAddress, "port:",lastDevicePort,"response messages %s\n", messageWithCmac.toString("hex"));
+    console.log("Sent to:", lastDeviceIpAddress, "port:",lastDevicePort,"response message:", messageWithCmac.toString("hex"));
     res.send(messageWithCmac.toString("hex"));
 }
 
