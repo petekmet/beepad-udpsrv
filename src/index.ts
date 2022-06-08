@@ -135,7 +135,7 @@ socket.on('close', function () {
 
 initDb();
 socket.bind(2222);
-console.log("UDP server started, v1.7.6");
+console.log("UDP server started, v1.7.7");
 webserver.listen(8080, () => {
     console.log("Web server is ⚡️running on 8080");
 });
