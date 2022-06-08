@@ -52,7 +52,7 @@ async function sendMessageToDevice(req: Request, res: Response) {
     const messageWithCmac = Buffer.concat([outMessage, result.subarray(0,4)]);
 
     socket.send(messageWithCmac, lastDevicePort, lastDeviceIpAddress);
-    console.log("Sent out response messages %s\n", messageWithCmac.toString("hex"));
+    console.log("Sent to", lastDeviceIpAddress, "port:",lastDevicePort,"response messages %s\n", messageWithCmac.toString("hex"));
     res.send(messageWithCmac.toString("hex"));
 }
 
