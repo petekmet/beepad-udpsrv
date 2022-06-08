@@ -105,7 +105,10 @@ socket.on('message', function (msg: Buffer, info: AddressInfo) {
                 packetLength: 4,
             });
             const payload = unixtime.encode({ timestamp: Math.trunc(Date.now() / 1000) });
-            const outMessage = Buffer.concat([Buffer.from(header.buffer), Buffer.from(payload.buffer)]);
+            const message = Buffer.concat([Buffer.from(header.buffer), Buffer.from(payload.buffer)]);
+            const aesCmac = new AesCmac(key);
+            const cmac = aesCmac.calculate(message);
+            const outMessage = Buffer.concat([message, cmac]);
             socket.send(outMessage, info.port, info.address);
             console.log("Sent out response messages %s\n", outMessage.toString("hex"));
     

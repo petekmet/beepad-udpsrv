@@ -22,17 +22,17 @@ describe("some test", () => {
     });
 
     test("decoding", () => { //000313CF8B853B16
-        const rawHexaString = "000313cf8b853b16000333d2dfbd6d810000c0169962c60027e1039b0000000000000000ee1001000000000000000000000000086c554e5a";
+        const rawHexaString = "163b858bcf130300816dbddfd2330300001a0057a062e30036d9039b14003b0021004900c40f01f077dd31eb17e5003c700b03182e70c9a3";
         const msg = Buffer.from(rawHexaString, "hex");
         const decoded = uplinkPacket.decode(new Uint8Array(msg.subarray(17)), true);
         const extSens = decoded.extSensor;
         console.log("raw: ", msg.subarray(17).toString("hex"));
         console.log("measurement timestamp ", new Date(decoded.measurementTimestamp*1000));
         console.log("decoded> ", decoded);
-        expect(decoded.sequenceId).toBe(0x00);
-        expect(decoded.measurementTimestamp).toBe(1654200000);
-        expect(decoded.temperature).toBe(198);
-        expect(decoded.cmic).toBe(1515083116);
+        expect(decoded.sequenceId).toBe(26);
+        expect(decoded.measurementTimestamp).toBe(1654675200);
+        expect(decoded.temperature).toBe(227);
+        expect(decoded.cmic).toBe(2747887662);
     });
 
     test("decodeUplinkHeader", () => {
