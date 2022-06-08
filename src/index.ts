@@ -105,7 +105,7 @@ socket.on('message', function (msg: Buffer, info: AddressInfo) {
                 packetLength: 4,
             });
             const payload = unixtime.encode({ timestamp: Math.trunc(Date.now() / 1000) });
-            const message = Buffer.concat([Buffer.from(header.buffer), Buffer.from(payload.buffer)]);
+            const message = Buffer.concat([Buffer.from(header.buffer), Buffer.from(payload.buffer).reverse()]);
             const aesCmac = new AesCmac(key);
             const cmac = aesCmac.calculate(message);
             const outMessage = Buffer.concat([message, cmac.subarray(0,4)]);
