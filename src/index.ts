@@ -43,9 +43,9 @@ async function sendMessageToDevice(req: Request, res: Response) {
         packetType: 1,
         packetLength: 6,
     });
+    const data = req.params.data ? Buffer.from(req.params.data): Buffer.from("000000000000");
     const payload = downlinkSetSensorPacket.encode({
-        deviceId: [0xF0, 0x77, 0xDD, 0x31, 0xEB, 0x17]
-        // deviceId: [0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+        deviceId: new Uint8Array(data)
     });
     const outMessage = Buffer.concat([Buffer.from(header.buffer), Buffer.from(payload.buffer)]);
 
@@ -136,7 +136,7 @@ socket.on('close', function () {
 
 initDb();
 socket.bind(2222);
-console.log("UDP server started, v1.7.7");
+console.log("UDP server started, v1.7.8");
 webserver.listen(8080, () => {
     console.log("Web server is ⚡️running on 8080");
 });
