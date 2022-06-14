@@ -1,6 +1,8 @@
 // Keeps UDP port open for incoming messages
 import { AesCmac } from "aes-cmac";
 import { AddressInfo } from "net";
+import { Device } from "../model/device";
+import { createConnection } from "ts-datastore-orm";
 import { downlinkPacketHeader, unixtime, UplinkPacket, uplinkPacket, UplinkPacketHeader, uplinkPacketHeader } from "../utils/structbuffer";
 
 // sends response messages to the device
@@ -17,7 +19,8 @@ export function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo): Buf
     // decode header
     // const packet = uplinkPacket.decode(msg, true);
     const packetHeader: UplinkPacketHeader = uplinkPacketHeader.decode(msg, true);
-    console.log("NB-IoT device composed address:", msg.subarray(0,16).toString("hex"));
+    const nbiotComposedAddress: string = msg.subarray(0,16).toString("hex");
+    console.log("NB-IoT device composed address:", nbiotComposedAddress);
     console.log("Decoded packet header:", packetHeader);
     // verify cmac
     const cmac = msg.subarray(msg.length-4); // Buffer.from("2cc95bb0", "hex");
@@ -29,17 +32,22 @@ export function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo): Buf
     if(calculatedCmacNumber == cmacNumber) {
         console.log("Cmac ok");
         const packetPayload = msg.subarray(17); // skip header at pos 17
-        return processUplinkData(packetHeader, packetPayload);
+        return processUplinkData(nbiotComposedAddress, packetHeader, packetPayload);
     }else{
         console.log("Cmac verification failed");
     }
     return Buffer.from("");
 }
 
-function processUplinkData(packetHeader: UplinkPacketHeader, packetPayload: Buffer): Buffer{
+function processUplinkData(address: string, packetHeader: UplinkPacketHeader, packetPayload: Buffer): Buffer{
     if(packetHeader.packetType === 0){
         const packet = uplinkPacket.decode(new Uint8Array(packetPayload), true);
         console.log("Decoded uplink packet type 0:\n", packet);
+        const connection = createConnection({ keyFilename: process.env.GOOGLE_SERVICE_ACCOUNT! });
+        const repostory = connection.getRepository(Device);
+        repostory.query().filter("address", address).findOne().then(device => {
+            console.log("Device found:", device);
+        });
         saveMessage(packet);
         if (packet.flags.downlinkRequest) {
             // get downlink message, return unix timestamp if no message in DB
