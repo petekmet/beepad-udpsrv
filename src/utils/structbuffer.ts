@@ -26,7 +26,7 @@ interface UplinkFlags {
     reserved: number
 }
 
-interface UplinkPacket {
+export interface UplinkPacket {
     sequenceId: number,
     measurementTimestamp: number,
     temperature: number,
@@ -43,7 +43,7 @@ interface UplinkPacket {
     cmic: number
 }
 
-interface UplinkPacketHeader {
+export interface UplinkPacketHeader {
     deviceId: BigInt,
     subscriberId: BigInt,
     packetType: number

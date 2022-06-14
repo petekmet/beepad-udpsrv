@@ -7,8 +7,8 @@ export async function initDb() {
         env.GOOGLE_SERVICE_ACCOUNT = "./datastore-service-account.json";
     }
     console.log("env.GOOGLE_SERVICE_ACCOUNT:", process.env.GOOGLE_SERVICE_ACCOUNT);
-    const connection = createConnection({ keyFilename: process.env.GOOGLE_SERVICE_ACCOUNT! });
-    const repostory = connection.getRepository(Device);
-    const result = await repostory.query().limit(10).findMany();
-    console.log(result);
+    // const connection = createConnection({ keyFilename: process.env.GOOGLE_SERVICE_ACCOUNT! });
+    // const repostory = connection.getRepository(Device);
+    // const result = await repostory.query().limit(10).findMany();
+    // console.log(result);
 }
