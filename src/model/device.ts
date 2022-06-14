@@ -6,8 +6,14 @@ export class Device extends BaseEntity {
     public _id: number = 0;
 
     @Field()
-    public address: string = "";
+    public address: string;
 
     @Field()
-    public name: string = "";
+    public name: string;
+
+    @Field()
+    public nwkSKey: string;
+
+    @Field()
+    public downlinkData: string;
 }

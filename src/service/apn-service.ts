@@ -7,10 +7,10 @@ import { downlinkPacketHeader, unixtime, UplinkPacket, uplinkPacket, UplinkPacke
 
 // sends response messages to the device
 
-const key = Buffer.from("CB4E3EA400309DAB656D8DBFE4B93F35", "hex");
+// const key = Buffer.from("CB4E3EA400309DAB656D8DBFE4B93F35", "hex");
 
 // emits on new datagram msg
-export function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo): Buffer {
+export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo): Promise<Buffer> {
     // verify cmac
     // extract device address
     // extract packet type
@@ -22,6 +22,12 @@ export function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo): Buf
     const nbiotComposedAddress: string = msg.subarray(0,16).toString("hex");
     console.log("NB-IoT device composed address:", nbiotComposedAddress);
     console.log("Decoded packet header:", packetHeader);
+    // get device properties
+    const connection = createConnection({ keyFilename: process.env.GOOGLE_SERVICE_ACCOUNT! });
+    const repostory = connection.getRepository(Device);
+    const d = await repostory.query().filter("address", nbiotComposedAddress).findOne();
+    const key = Buffer.from(d!.nwkSKey, "hex");
+    console.log("Device properties:", d);
     // verify cmac
     const cmac = msg.subarray(msg.length-4); // Buffer.from("2cc95bb0", "hex");
     const cmacNumber = cmac.readInt32LE();
@@ -32,26 +38,21 @@ export function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo): Buf
     if(calculatedCmacNumber == cmacNumber) {
         console.log("Cmac ok");
         const packetPayload = msg.subarray(17); // skip header at pos 17
-        return processUplinkData(nbiotComposedAddress, packetHeader, packetPayload);
+        return processUplinkData(key, packetHeader, packetPayload);
     }else{
         console.log("Cmac verification failed");
     }
     return Buffer.from("");
 }
 
-function processUplinkData(address: string, packetHeader: UplinkPacketHeader, packetPayload: Buffer): Buffer{
+function processUplinkData(key: Buffer, packetHeader: UplinkPacketHeader, packetPayload: Buffer): Buffer{
     if(packetHeader.packetType === 0){
         const packet = uplinkPacket.decode(new Uint8Array(packetPayload), true);
         console.log("Decoded uplink packet type 0:\n", packet);
-        const connection = createConnection({ keyFilename: process.env.GOOGLE_SERVICE_ACCOUNT! });
-        const repostory = connection.getRepository(Device);
-        repostory.query().filter("address", address).findOne().then(device => {
-            console.log("Device found:", device);
-        });
         saveMessage(packet);
         if (packet.flags.downlinkRequest) {
-            // get downlink message, return unix timestamp if no message in DB
-            
+            // create downlink message, return unix timestamp if no message in DB
+            // set packet type based on message first byte
             const header = downlinkPacketHeader.encode({
                 deviceId: packetHeader.deviceId,
                 subscriberId: packetHeader.subscriberId,
@@ -60,7 +61,7 @@ function processUplinkData(address: string, packetHeader: UplinkPacketHeader, pa
             }, true);
             const payload = unixtime.encode({ timestamp: Math.trunc(Date.now() / 1000) });
             const message = Buffer.concat([Buffer.from(header.buffer), Buffer.from(payload.buffer)]);
-            return messageWithMac(message);
+            return messageWithMac(message, key);
     
         } else {
             console.log("No downlink requested");
@@ -69,7 +70,7 @@ function processUplinkData(address: string, packetHeader: UplinkPacketHeader, pa
     return Buffer.from("");
 }
 
-function messageWithMac(message: Buffer): Buffer{
+function messageWithMac(message: Buffer, key: Buffer): Buffer{
     const aesCmac = new AesCmac(key);
     const cmac = aesCmac.calculate(message);
     return Buffer.concat([message, cmac.subarray(0,4)]);

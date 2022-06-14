@@ -10,18 +10,18 @@ const key = Buffer.from("CB4E3EA400309DAB656D8DBFE4B93F35", "hex");
 
 export function startUdpServer(){
     // emits on new datagram msg
-    server.on('message', function (msg: Buffer, info: AddressInfo) {
+    server.on('message', async function (msg: Buffer, info: AddressInfo) {
         lastDeviceIpAddress = info.address;
         lastDevicePort = info.port;
         console.log("Inbound message on %s", new Date());
         console.log("Received %d bytes from %s:%d", msg.length, info.address, info.port);
         console.log("Data:", msg.toString("hex"));
-        const responseBuffer:Buffer = apnServiceGetResponseBuffer(msg, info);
+        const responseBuffer = await apnServiceGetResponseBuffer(msg, info);
         if(responseBuffer.length > 0){
             server.send(responseBuffer, info.port, info.address);
             console.log("Sent out response messages %s\n", responseBuffer.toString("hex"));
         }else{
-            console.log("No downlink requested");
+            console.log("No data sent out");
         }
     });
 
