@@ -17,7 +17,7 @@ export function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo): Buf
     // decode header
     // const packet = uplinkPacket.decode(msg, true);
     const packetHeader: UplinkPacketHeader = uplinkPacketHeader.decode(msg, true);
-    console.log("Composed NB-IoT device address:", msg.subarray(0,15).toString("hex"));
+    console.log("NB-IoT device composed address:", msg.subarray(0,16).toString("hex"));
     console.log("Decoded packet header:", packetHeader);
     // verify cmac
     const cmac = msg.subarray(msg.length-4); // Buffer.from("2cc95bb0", "hex");
@@ -49,9 +49,9 @@ function processUplinkData(packetHeader: UplinkPacketHeader, packetPayload: Buff
                 subscriberId: packetHeader.subscriberId,
                 packetType: 0,
                 packetLength: 4,
-            });
+            }, true);
             const payload = unixtime.encode({ timestamp: Math.trunc(Date.now() / 1000) });
-            const message = Buffer.concat([Buffer.from(header.buffer), Buffer.from(payload.buffer).reverse()]);
+            const message = Buffer.concat([Buffer.from(header.buffer), Buffer.from(payload.buffer)]);
             return messageWithMac(message);
     
         } else {
