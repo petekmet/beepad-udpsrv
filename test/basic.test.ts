@@ -1,9 +1,9 @@
 
 import { getModelForClass } from "@typegoose/typegoose";
 import { AesCmac } from "aes-cmac";
-import mongoose from "mongoose";
+import { initMongoose } from "../src/utils/db";
 import { sbytes as b } from "struct-buffer";
-import { Device, NbiotDevice } from "../src/model/device";
+import { Device } from "../src/model/device";
 import { downlinkPacketHeader, unixtime, uplinkPacket, uplinkPacketHeader } from "../src/utils/structbuffer";
 
 describe("some test", () => {
@@ -77,4 +77,10 @@ describe("some test", () => {
         const downlinkData = d?.downlinkData ? Buffer.from(d.downlinkData, "hex") : undefined;
         expect(downlinkData).toBe(undefined);
     });
+
+    test("env vars", async ()=>{
+        initMongoose();
+    });
 });
+
+

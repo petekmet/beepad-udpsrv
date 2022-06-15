@@ -48,7 +48,7 @@ function processUplinkData(
     packetHeader: UplinkPacketHeader,
     packetPayload: Buffer,
     downlinkData?: Buffer
-): Buffer {
+): Buffer | undefined {
     if (packetHeader.packetType === 0) {
         const packet = uplinkPacket.decode(new Uint8Array(packetPayload), true);
         console.log("Decoded uplink packet type 0:\n", packet);
@@ -57,7 +57,6 @@ function processUplinkData(
             return messageWithMac(createDownlinkMessage(packetHeader, downlinkData), key);
         }
     }
-    return Buffer.from("");
 }
 
 function saveMessage(packet: UplinkPacket) {

@@ -1,7 +1,5 @@
-import { getModelForClass } from "@typegoose/typegoose";
 import mongoose from "mongoose";
 import { env } from "process";
-import { NbiotDevice } from "../model/nbiot-device";
 
 export async function initDb() {
     if(!env.GOOGLE_SERVICE_ACCOUNT){

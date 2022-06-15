@@ -36,9 +36,10 @@ webserver.route("/health").get(healthMethod);
 initDb();
 initMongoose();
 
+// TODO: extract to a separate file
 webserver.listen(8080, () => {
     console.log("Web server is ⚡️running on 8080");
 });
 
 startUdpServer();
-console.log("udpsrv started, v1.8.2");
+console.log("udpsrv started, v1.8.3");
