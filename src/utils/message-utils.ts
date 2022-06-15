@@ -4,9 +4,9 @@ import { downlinkPacketHeader, unixtime, UplinkPacketHeader } from "./structbuff
 export function createDownlinkMessage(packetHeader: UplinkPacketHeader, downlinkData?: Buffer): Buffer {
     // create downlink message, return unix timestamp if no message in DB
     // set packet type based on message first byte
-    var packetType = 0; // default
-    var packetLength = 4; // timestamp data size
-    var payload: ArrayBuffer = unixtime.encode({ timestamp: Math.trunc(Date.now() / 1000) }).buffer;
+    let packetType = 0; // default
+    let packetLength = 4; // timestamp data size
+    let payload: ArrayBuffer = unixtime.encode({ timestamp: Math.trunc(Date.now() / 1000) }).buffer;
     if(downlinkData && downlinkData.length > 0) {
         packetType = downlinkData.readUint8(0);
         packetLength = downlinkData.length - 1;

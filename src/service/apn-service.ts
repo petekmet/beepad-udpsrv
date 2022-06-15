@@ -8,7 +8,7 @@ import { messageWithMac } from "../utils/message-utils";
 import { createDownlinkMessage } from "../utils/message-utils";
 
 // emits on new datagram msg
-export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo): Promise<Buffer> {
+export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo): Promise<Buffer| undefined> {
     // verify cmac
     // extract device address
     // extract packet type
@@ -41,7 +41,6 @@ export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo
     } else {
         console.log("Cmac verification failed");
     }
-    return Buffer.from("");
 }
 
 function processUplinkData(

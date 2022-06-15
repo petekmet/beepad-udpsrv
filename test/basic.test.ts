@@ -1,6 +1,7 @@
 
 import { AesCmac } from "aes-cmac";
 import { sbytes as b } from "struct-buffer";
+import { Device } from "../src/model/device";
 import { initDb } from "../src/utils/db";
 import { downlinkPacketHeader, unixtime, uplinkPacket, uplinkPacketHeader } from "../src/utils/structbuffer";
 
@@ -67,5 +68,12 @@ describe("some test", () => {
         const result = aesCmac.calculate(message.subarray(0,message.length-4));
         const calculatedCmacNumber: number = result.subarray(0,4).readInt32LE();
         expect(calculatedCmacNumber).toBe(cmacNumber);
+    });
+
+    test("optional parameters", ()=>{
+        const d = new Device();
+        d.downlinkData = "";
+        const downlinkData = d?.downlinkData ? Buffer.from(d.downlinkData, "hex") : undefined;
+        expect(downlinkData).toBe(undefined);
     });
 });
