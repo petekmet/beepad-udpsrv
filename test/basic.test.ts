@@ -1,7 +1,9 @@
 
+import { getModelForClass } from "@typegoose/typegoose";
 import { AesCmac } from "aes-cmac";
+import mongoose from "mongoose";
 import { sbytes as b } from "struct-buffer";
-import { Device } from "../src/model/device";
+import { Device, NbiotDevice } from "../src/model/device";
 import { downlinkPacketHeader, unixtime, uplinkPacket, uplinkPacketHeader } from "../src/utils/structbuffer";
 
 describe("some test", () => {

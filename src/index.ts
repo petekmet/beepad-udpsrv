@@ -1,6 +1,6 @@
 import express, { Express, Request, Response } from "express";
 import { startUdpServer } from "./apn-server";
-import { initDb } from "./utils/db";
+import { initDb, initMongoose } from "./utils/db";
 
 /*
 uint64_t deviceId;      // 8 bytes, IMEI, max 18 446 744 073 709 551 615
@@ -34,9 +34,11 @@ webserver.route("/health").get(healthMethod);
 // webserver.route("/devmsg").get(sendMessageToDevice);
 
 initDb();
+initMongoose();
 
 webserver.listen(8080, () => {
     console.log("Web server is ⚡️running on 8080");
 });
 
 startUdpServer();
+console.log("udpsrv started, v1.8.2");

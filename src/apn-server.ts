@@ -42,5 +42,4 @@ export function startUdpServer(){
     });
 
     server.bind(2222);
-    console.log("UDP server started, v1.8.1");
 }

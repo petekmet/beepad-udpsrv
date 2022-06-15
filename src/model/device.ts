@@ -1,3 +1,4 @@
+import { prop } from "@typegoose/typegoose";
 import { BaseEntity, Entity, Field } from "ts-datastore-orm";
 
 @Entity()
@@ -16,4 +17,12 @@ export class Device extends BaseEntity {
 
     @Field()
     public downlinkData: string;
+}
+
+export class NbiotDevice {
+    @prop()
+    public address: string;
+
+    @prop()
+    public name: string;
 }
