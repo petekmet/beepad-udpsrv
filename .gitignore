@@ -1,3 +1,5 @@
 node_modules/
 dist/
 datastore-service-account.json
+test-env.ps1
+test-env.sh
