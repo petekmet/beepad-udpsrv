@@ -10,21 +10,18 @@ image:
   # Overrides the image tag whose default is the chart appVersion.
   tag: "latest"
   env:
-    - name: GOOGLE_SERVICE_ACCOUNT
-      value: /etc/udpsrv/google-service-account
-  env:
-    - name: MONGO_DB_URI
-      valueFrom:
-        secretKeyRef:
-          name: mongo-db-cred
-          key: dbConnectionString
-  env:
-    - name: MONGO_DB_NAME
-      valueFrom:
-        secretKeyRef:
-          name: mongo-db-cred
-          key: dbName
-          
+  - name: GOOGLE_SERVICE_ACCOUNT
+    value: /etc/udpsrv/google-service-account
+  - name: MONGO_DB_NAME
+    valueFrom:
+      secretKeyRef:
+        name: mongo-db-cred
+        key: dbName
+  - name: MONGO_DB_URI
+    valueFrom:
+      secretKeyRef:
+        name: mongo-db-cred
+        key: dbConnectionString
 volumeMounts:
   - name: google-service-account
     mountPath: /etc/udpsrv
