@@ -2,7 +2,6 @@
 import { AesCmac } from "aes-cmac";
 import { sbytes as b } from "struct-buffer";
 import { Device } from "../src/model/device";
-import { initDb } from "../src/utils/db";
 import { downlinkPacketHeader, unixtime, uplinkPacket, uplinkPacketHeader } from "../src/utils/structbuffer";
 
 describe("some test", () => {

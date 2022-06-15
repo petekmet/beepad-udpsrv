@@ -6,7 +6,7 @@ export function createDownlinkMessage(packetHeader: UplinkPacketHeader, downlink
     // set packet type based on message first byte
     let packetType = 0; // default
     let packetLength = 4; // timestamp data size
-    let payload: ArrayBuffer = unixtime.encode({ timestamp: Math.trunc(Date.now() / 1000) }).buffer;
+    let payload: ArrayBuffer = unixtime.encode({ timestamp: Math.trunc(Date.now() / 1000) }, true).buffer;
     if(downlinkData && downlinkData.length > 0) {
         packetType = downlinkData.readUint8(0);
         packetLength = downlinkData.length - 1;
