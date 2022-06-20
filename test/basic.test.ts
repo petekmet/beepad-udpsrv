@@ -56,7 +56,7 @@ describe("some test", () => {
         console.log("Device:", d);
         expect(d?.tares[0].name).toBe("Před hodinou");
         expect(d?.tares.length).toBe(4);
-        expect(d?.onDuty).toBe(Date.parse("2022-06-12T22:00:00.000Z"));
+        expect(d?.onDuty).toMatchObject(new Date("2022-06-12T22:00:00.000Z"));
     });
 
     test("aes-cmac", () => { 
