@@ -53,7 +53,7 @@ function processUplinkData(
         const packet = uplinkPacket.decode(new Uint8Array(packetPayload), true);
         console.log("Decoded uplink packet type 0:\n", packet);
         saveMessage(packet);
-        if (packet.flags.downlinkRequest) {
+        if (packet.flags.downlinkRequest || downlinkData) {
             return messageWithMac(createDownlinkMessage(packetHeader, downlinkData), key);
         }
     }

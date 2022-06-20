@@ -1,5 +1,7 @@
 import { prop } from "@typegoose/typegoose";
 import { BaseEntity, Entity, Field } from "ts-datastore-orm";
+import { Measurement } from "./measurement.entity";
+import { Tare } from "./tare.entity";
 /*
 { "id": 6401590107832320,
  "name": "NB001-SK-TEST1",
@@ -25,11 +27,59 @@ export class Device extends BaseEntity {
     public address: string;
 
     @Field()
+    public calibrationIndex: number;
+
+    @Field()
+    public zeroWeight: number;
+
+    @Field()
+    public openHour: number;
+    
+    @Field()
+    public closeHour: number;
+
+    @Field()
+    public timeZone: string;
+
+    @Field()
+    public beta0: number;
+
+    @Field()
+    public beta1: number;
+
+    @Field()
+    public oldBeta0: number;
+
+    @Field()
+    public downlinkData: string;
+
+    @Field()
+    public status: string;
+
+    @Field()
+    public tares: Tare[];
+
+    @Field()
+    public lat: number;
+
+    @Field()
+    public lon: number;
+
+    @Field()
+    public deviceClass: number;
+
+    @Field()
+    public onDuty: Date;
+
+    @Field()
+    public offDuty: Date;
+
+    @Field()
     public name: string;
 
     @Field()
     public nwkSKey: string;
 
     @Field()
-    public downlinkData: string;
+    public lastMeasurement: Measurement;
 }

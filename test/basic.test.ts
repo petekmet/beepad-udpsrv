@@ -1,10 +1,11 @@
 
 import { getModelForClass } from "@typegoose/typegoose";
 import { AesCmac } from "aes-cmac";
-import { initMongoose } from "../src/utils/db";
+import { initDb, initMongoose } from "../src/utils/db";
 import { sbytes as b } from "struct-buffer";
 import { Device } from "../src/model/device";
 import { downlinkPacketHeader, unixtime, uplinkPacket, uplinkPacketHeader } from "../src/utils/structbuffer";
+import { createConnection } from "ts-datastore-orm";
 
 describe("some test", () => {
     test("encoding", () => {
@@ -45,9 +46,18 @@ describe("some test", () => {
         expect(decodedHeader.packetType).toBe(0);
     });
 
-    // test("datastore", async ()=> {
-    //     await initDb();
-    // });
+    test("datastore t3", async ()=> {
+        const nbiotComposedAddress = "C0406A88";// "163b858bcf130300606c8cded2330300";
+        await initDb();
+        const connection = createConnection({ keyFilename: process.env.GOOGLE_SERVICE_ACCOUNT! });
+        const repostory = connection.getRepository(Device);
+        const d = await repostory.query().filter("address", nbiotComposedAddress).findOne();
+         
+        console.log("Device:", d);
+        expect(d?.tares[0].name).toBe("Před hodinou");
+        expect(d?.tares.length).toBe(4);
+        expect(d?.onDuty).toBe(Date.parse("2022-06-12T22:00:00.000Z"));
+    });
 
     test("aes-cmac", () => { 
         const key = Buffer.from("CB4E3EA400309DAB656D8DBFE4B93F35", "hex");
@@ -82,5 +92,3 @@ describe("some test", () => {
         initMongoose();
     });
 });
-
-
