@@ -9,12 +9,17 @@ interface BatterySoc {
     status: number
 }
 
+interface ExtSensorFlags {
+    sensorFound: boolean,
+    reserved: number
+}
+
 interface ExtSensor {
     deviceId: number[],
     temperature: number,
     humidity: number,
     batteryLevel: number,
-    sensorStatus: number
+    sensorFlags: ExtSensorFlags
 }
 
 interface UplinkFlags {

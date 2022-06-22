@@ -23,7 +23,7 @@ export class Device extends BaseEntity {
     @Field({generateId: true})
     public _id: number = 0;
 
-    @Field()
+    @Field({index: true})
     public address: string;
 
     @Field()

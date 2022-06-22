@@ -6,6 +6,8 @@ import { createConnection } from "ts-datastore-orm";
 import { UplinkPacket, uplinkPacket, UplinkPacketHeader, uplinkPacketHeader } from "../utils/structbuffer";
 import { messageWithMac } from "../utils/message-utils";
 import { createDownlinkMessage } from "../utils/message-utils";
+import { createMeasurementFromPacket, saveMeasurementForDevice } from "./measurement-service";
+import { Measurement } from "../model/measurement.entity";
 
 // emits on new datagram msg
 export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo): Promise<Buffer| undefined> {
@@ -37,13 +39,14 @@ export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo
     if (calculatedCmacNumber == cmacNumber) {
         console.log("Cmac ok");
         const packetPayload = msg.subarray(17); // skip header at pos 17
-        return processUplinkData(key, packetHeader, packetPayload, downlinkData);
+        return processUplinkData(nbiotComposedAddress, key, packetHeader, packetPayload, downlinkData);
     } else {
         console.log("Cmac verification failed");
     }
 }
 
 function processUplinkData(
+    deviceAddress: string,
     key: Buffer,
     packetHeader: UplinkPacketHeader,
     packetPayload: Buffer,
@@ -52,14 +55,14 @@ function processUplinkData(
     if (packetHeader.packetType === 0) {
         const packet = uplinkPacket.decode(new Uint8Array(packetPayload), true);
         console.log("Decoded uplink packet type 0:\n", packet);
-        saveMessage(packet);
+        saveMessage(deviceAddress, packet);
+        console.log("Measurement on", new Date(packet.measurementTimestamp * 1000));
         if (packet.flags.downlinkRequest || downlinkData) {
             return messageWithMac(createDownlinkMessage(packetHeader, downlinkData), key);
         }
     }
 }
 
-function saveMessage(packet: UplinkPacket) {
-    console.log("Measurement on", new Date(packet.measurementTimestamp * 1000));
-    console.log("Storing message...");
+function saveMessage(deviceAddress: string, packet: UplinkPacket) {
+    saveMeasurementForDevice(deviceAddress, createMeasurementFromPacket(packet));
 }
