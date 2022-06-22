@@ -1,7 +1,7 @@
-import { downlinkPacketHeader, unixtime, uplinkPacket, uplinkPacketHeader } from "../src/utils/structbuffer";
+import { downlinkPacketHeader, uplinkPacket, uplinkPacketHeader } from "../src/utils/structbuffer";
 import { sbytes as b } from "struct-buffer";
 import { createDownlinkMessage } from "../src/utils/message-utils";
-import exp from "constants";
+import { createMeasurementFromPacket } from "../src/service/measurement-service";
 
 describe("message utils tests", () => {
     const rawHexaString = "163b858bcf130300816dbddfd2330300001478b899627b003ce3039d0000000000000000e4100100000000000000000000000018e52d8a78";
@@ -52,4 +52,7 @@ describe("message utils tests", () => {
         expect(downlinkMessage.readUint8(23)).toBe(0x05);
         expect(downlinkMessage.readUint8(24)).toBe(0x06);
     });
+
+    
 });
+
