@@ -52,12 +52,12 @@ export async function saveMeasurementForDevice(deviceAddress: string, measuremen
         }
 
         measurement._ancestorKey = d!.getKey();
-        measurement = await measurementRepo.insert(measurement);
+        // measurement = await measurementRepo.insert(measurement);
         console.log("Measurement:");
         console.log(measurement);
         device!.lastMeasurement = measurement;
         // update device
-        await repostory.update(device!);
+        // await repostory.update(device!);
         console.log("Measurement stored, device updated");
     }   
 }
