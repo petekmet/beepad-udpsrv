@@ -52,12 +52,12 @@ export async function saveMeasurementForDevice(deviceAddress: string, measuremen
         }
 
         measurement._ancestorKey = d!.getKey();
-        // measurement = await measurementRepo.insert(measurement);
+        measurement = await measurementRepo.insert(measurement);
         console.log("Measurement:");
         console.log(measurement);
         device!.lastMeasurement = measurement;
         // update device
-        // await repostory.update(device!);
+        await repostory.update(device!);
         console.log("Measurement stored, device updated");
     }   
 }
@@ -71,9 +71,9 @@ export function createMeasurementFromPacket(packet: UplinkPacket): Measurement {
     measurement.pressure = packet.pressure;
     measurement.battery = packet.batterySoc.batteryLevel;
     measurement.batteryStatus = packet.batterySoc.status;
-    measurement.alarm = packet.flags.alert;
+    measurement.alarm = packet.flags.alert == true ? true : false;
     measurement.cnt = packet.sequenceId;
-    measurement.downlinkReq = packet.flags.downlinkRequest;
+    measurement.downlinkReq = packet.flags.downlinkRequest == true ? true : false;
     if(packet.extSensor.sensorFlags.sensorFound) {
         measurement.ext = new ExtSensor();
         measurement.ext!.temperature = packet.extSensor.temperature / 10;
@@ -81,8 +81,8 @@ export function createMeasurementFromPacket(packet: UplinkPacket): Measurement {
         measurement.ext!.battery = packet.extSensor.batteryLevel;
         // measurement.ext!.rssi = packet.extSensor.;
     }
-    measurement.reset = packet.flags.restart;
+    measurement.reset = packet.flags.restart == true ? true : false;
     measurement.rssi = packet.signalStrength;
-    measurement.shutdown = packet.flags.shutdown;
+    measurement.shutdown = packet.flags.shutdown == true ? true : false;
     return measurement;    
 }
