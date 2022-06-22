@@ -51,6 +51,7 @@ export async function saveMeasurementForDevice(deviceAddress: string, measuremen
             console.log("Day created", d.getKey());
         }
 
+        measurement._ancestorKey = d!.getKey();
         measurement = await measurementRepo.insert(measurement);
         console.log("Measurement:");
         console.log(measurement);
