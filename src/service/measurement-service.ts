@@ -6,8 +6,9 @@ import { Month } from "../model/month.entity";
 import { Day } from "../model/day.entity";
 import { UplinkPacket } from "../utils/structbuffer";
 import { ExtSensor } from "../model/ext-sensor.entity";
+import luxon, { DateTime } from "luxon";
 
-export async function saveMeasurementForDevice(deviceAddress: string, measurement: Measurement) {
+export async function saveMeasurementForDevice(deviceAddress: string, timeZone: string, measurement: Measurement) {
     const connection = createConnection({ keyFilename: process.env.GOOGLE_SERVICE_ACCOUNT! });
     const repostory = connection.getRepository(Device);
     const device = await repostory.query().filter("address", deviceAddress).findOne();
@@ -15,9 +16,12 @@ export async function saveMeasurementForDevice(deviceAddress: string, measuremen
     console.log("Device:", device);
     if (device) {
         const dateOfMeasurement = measurement.timestamp;
-        const year = dateOfMeasurement.getFullYear();
-        const month = dateOfMeasurement.getMonth();
-        const day = dateOfMeasurement.getDate();
+
+        const zonedDateTime = DateTime.fromSeconds(dateOfMeasurement.getTime()/1000).setZone(timeZone);
+
+        const year = zonedDateTime.year; // dateOfMeasurement.getFullYear();
+        const month = zonedDateTime.month - 1; // dateOfMeasurement.getMonth();
+        const day = zonedDateTime.day; // dateOfMeasurement.getDate();
 
         const yearRepo = connection.getRepository(Year);
         const monthRepo = connection.getRepository(Month);

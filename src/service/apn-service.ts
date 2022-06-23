@@ -35,11 +35,12 @@ export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo
     const result = aesCmac.calculate(msg.subarray(0, msg.length - 4));
     const calculatedCmacNumber: number = result.subarray(0, 4).readInt32LE();
     const downlinkData = d?.downlinkData ? Buffer.from(d.downlinkData, "hex") : undefined;
+    const timeZone = d?.timeZone ? d.timeZone : "Europe/Prague"; // default time zone
 
     if (calculatedCmacNumber == cmacNumber) {
         console.log("Cmac ok");
         const packetPayload = msg.subarray(17); // skip header at pos 17
-        return processUplinkData(nbiotComposedAddress, key, packetHeader, packetPayload, downlinkData);
+        return processUplinkData(nbiotComposedAddress, timeZone, key, packetHeader, packetPayload, downlinkData);
     } else {
         console.log("Cmac verification failed");
     }
@@ -47,6 +48,7 @@ export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo
 
 function processUplinkData(
     deviceAddress: string,
+    timeZone: string,
     key: Buffer,
     packetHeader: UplinkPacketHeader,
     packetPayload: Buffer,
@@ -55,7 +57,7 @@ function processUplinkData(
     if (packetHeader.packetType === 0) {
         const packet = uplinkPacket.decode(new Uint8Array(packetPayload), true);
         console.log("Decoded uplink packet type 0:\n", packet);
-        saveMessage(deviceAddress, packet);
+        saveMessage(deviceAddress, timeZone, packet);
         console.log("Measurement on", new Date(packet.measurementTimestamp * 1000));
         if (packet.flags.downlinkRequest || downlinkData) {
             return messageWithMac(createDownlinkMessage(packetHeader, downlinkData), key);
@@ -63,6 +65,6 @@ function processUplinkData(
     }
 }
 
-function saveMessage(deviceAddress: string, packet: UplinkPacket) {
-    saveMeasurementForDevice(deviceAddress, createMeasurementFromPacket(packet));
+function saveMessage(deviceAddress: string, timeZone: string, packet: UplinkPacket) {
+    saveMeasurementForDevice(deviceAddress, timeZone, createMeasurementFromPacket(packet));
 }
