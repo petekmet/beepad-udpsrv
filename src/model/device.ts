@@ -82,4 +82,14 @@ export class Device extends BaseEntity {
 
     @Field()
     public lastMeasurement: Measurement;
+
+    // new fields specific for NB-IoT device
+    @Field()
+    public ipAddress: string;
+
+    @Field()
+    public port: number;
+
+    @Field()
+    public batteryLow: boolean = false;
 }
