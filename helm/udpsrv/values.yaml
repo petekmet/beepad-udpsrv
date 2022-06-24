@@ -22,6 +22,16 @@ image:
       secretKeyRef:
         name: mongo-db-cred
         key: dbConnectionString
+  - name: AWS_SES_ACCESS_KEY_ID
+    valueFrom:
+      secretKeyRef:
+        name: aws-secret
+        key: aws_ses_access_key_id
+  - name: AWS_SES_ACCESS_SECRET
+    valueFrom:
+      secretKeyRef:
+        name: aws-secret
+        key: aws_ses_access_secret
 volumeMounts:
   - name: google-service-account
     mountPath: /etc/udpsrv

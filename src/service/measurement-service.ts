@@ -55,15 +55,7 @@ export async function saveMeasurementForDevice(connection: Connection, device: D
     console.log(measurement);
     device.lastMeasurement = measurement;
     
-    // check battery state
-    if(measurement.battery > 3700 && device.batteryLow == true) {
-        device.batteryLow = false;
-        // send battery back to normal email
-    }else
-    if(measurement.battery < 3400 && device.batteryLow == false) {
-        device.batteryLow = true;
-        // send battery low email
-    }
+    
     // update device
     const repostory = connection.getRepository(Device);
     await repostory.update(device);

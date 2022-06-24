@@ -1,0 +1,8 @@
+{
+    "Template": {
+        "TemplateName": "EN_BatteryGoodTemplate",
+        "SubjectPart": "BeePad problém s batériou vyriešený",
+        "HtmlPart": "Dobrý deň, <p>batéria vo Vašej včelárskej váhe {{deviceName}} BeePad sa vracia do normálu.</p><p>Ďakujeme.</p><p>Administrator BeePad</p>",
+        "TextPart": "Dobrý deň,\r\nbatéria vo Vašej včelárskej váhe {{deviceName}} sa vracia do normálu.\r\nĎakujeme.\r\nAdministrator BeePad"
+    }
+}

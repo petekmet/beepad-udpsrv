@@ -8,6 +8,7 @@
     "test": "tsc --module commonjs && jest dist/test/"
   },
   "dependencies": {
+    "@aws-sdk/client-sesv2": "^3.112.0",
     "@google-cloud/datastore": "^6.6.2",
     "@typegoose/typegoose": "^9.9.0",
     "@types/express": "^4.17.13",

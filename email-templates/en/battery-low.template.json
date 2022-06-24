@@ -1,0 +1,10 @@
+{
+    "Template": {
+        "TemplateName": "EN_BatteryLowTemplate",
+        "SubjectPart": "BeePad ma problém s batériou",
+        "HtmlPart": "Dobrý deň, <p>Vaša včelárska váha {{devicename}} má problém s batériou.</p><p>Aby nedošlo k vypnutiu a znefunkčneniu váhy, prosím, skúste upraviť pozíciu solárneho panelu alebo použite nabíjací káblik a powerbanku.</p><p>Ďakujeme.</p><p>Administrator BeePad</p>",
+        "TextPart": "Dobrý deň,\r\nVaša včelárska váha {{devicename}} má problém s batériou.\r\nAby nedošlo k vypnutiu a znefunkčneniu váhy, prosím, skúste upraviť pozíciu solárneho panelu alebo použite nabíjací káblik a powerbanku.\r\nĎakujeme.\r\nAdministrator BeePad\r\n"
+    }
+}
+
+

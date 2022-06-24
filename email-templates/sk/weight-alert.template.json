@@ -1,0 +1,8 @@
+{
+    "Template": {
+        "TemplateName": "SK_WeightAlertTemplate",
+        "SubjectPart": "BeePad: náhla zmena hmotnosti",
+        "HtmlPart": "Dobrý deň, <p>Vaša včelárska váha <a href=\"https://mybeepad.com/sk/device/{{deviceid}}\">{{devicename}}</a> zaznamenala náhlu zmenu hmotnosti o {{weight}} kg.</p><p>Administrator BeePad</p><br><p>P.S. Toto je automatická správa, prosím, neodpovedajte na ňu.</p>",
+        "TextPart": "Dobrý deň, Vaša včelárska váha {{devicename}} zaznamenala náhlu zmenu hmotnosti o {{weight}} kg.\r\nAdministrator BeePad\r\nP.S. Toto je automatická správa, prosím, neodpovedajte na ňu.</p>"
+    }
+}

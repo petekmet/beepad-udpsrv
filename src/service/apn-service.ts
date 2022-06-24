@@ -1,11 +1,11 @@
 // Keeps UDP port open for incoming messages
 import { AesCmac } from "aes-cmac";
 import { AddressInfo } from "net";
-import { Device } from "../model/device";
 import { Connection, createConnection } from "ts-datastore-orm";
+import { Device } from "../model/device";
+import { createDownlinkMessage, messageWithMac } from "../utils/message-utils";
 import { uplinkPacket, UplinkPacketHeader, uplinkPacketHeader } from "../utils/structbuffer";
-import { messageWithMac } from "../utils/message-utils";
-import { createDownlinkMessage } from "../utils/message-utils";
+import { processEmailAlerts } from "./email-service";
 import { createMeasurementFromPacket, saveMeasurementForDevice } from "./measurement-service";
 
 // emits on new datagram msg
@@ -57,8 +57,9 @@ function processUplinkData(
     if (packetHeader.packetType === 0) {
         const packet = uplinkPacket.decode(new Uint8Array(packetPayload), true);
         console.log("Decoded uplink packet type 0\n", packet);
-
-        saveMeasurementForDevice(connection, device, createMeasurementFromPacket(packet));
+        const measurement = createMeasurementFromPacket(packet);
+        processEmailAlerts(device, measurement);
+        saveMeasurementForDevice(connection, device, measurement);
         
         if (packet.flags.downlinkRequest || downlinkData) {
             const key = Buffer.from(device.nwkSKey, "hex");
