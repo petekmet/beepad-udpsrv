@@ -79,7 +79,7 @@ export function createMeasurementFromPacket(packet: UplinkPacket): Measurement {
         measurement.ext!.temperature = packet.extSensor.temperature / 10;
         measurement.ext!.humidity = packet.extSensor.humidity;
         measurement.ext!.battery = packet.extSensor.batteryLevel;
-        // measurement.ext!.rssi = packet.extSensor.;
+        measurement.ext!.rssi = 0;
     }
     measurement.reset = packet.flags.restart == true ? true : false;
     measurement.rssi = packet.signalStrength;
