@@ -60,14 +60,15 @@ jobs:
     - name: print branch
       run: echo ${{ needs.CI-build-set-versions.outputs.branch }}
 
-    - name: Set up Docker Buildx
-      uses: crazy-max/ghaction-docker-buildx@v1
-      with:
-        version: latest
+    - name: Set up QEMU        
+      uses: docker/setup-qemu-action@v1
+
+    - name: Set up Docker Buildx        
+      uses: docker/setup-buildx-action@v1
 
     # Container build and push to a Azure Container Registry (ACR)
     - run: |
-        docker buildx build --platform linux/arm/v7 -t ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.version }} --file ./Dockerfile --output type=image,push=true .
+        docker buildx build --platform linux/amd64,linux/arm/v7 -t ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.version }} --file ./Dockerfile --output type=image,push=true .
         # docker build . -t ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.version }}
         # docker push ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.version }}
         # docker tag ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.version }} ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.branch }}
