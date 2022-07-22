@@ -1,5 +1,5 @@
 FROM node:17 as builder
-RUN mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
+RUN uname -a && mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
 WORKDIR /home/node/app
 COPY package*.json ./
 # RUN npm config set unsafe-perm true
@@ -12,7 +12,7 @@ COPY --chown=node:node . .
 RUN npm run build
 
 FROM node:slim
-RUN mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
+RUN uname -a && mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
 WORKDIR /home/node/app
 COPY package*.json ./
 RUN npm install --omit=dev
