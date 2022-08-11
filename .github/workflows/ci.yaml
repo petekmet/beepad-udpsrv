@@ -39,6 +39,9 @@ jobs:
   CI-build-and-publish-docker-image:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        docker_target: [ 'x86_64:linux/amd64', 'arm:linux/arm/v7' ]
     needs: CI-build-set-versions
     steps:
     # Checkout the repo
@@ -69,10 +72,10 @@ jobs:
     - run: |
         docker buildx build --platform linux/amd64,linux/arm/v7 -t ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.version }} --file ./Dockerfile --output type=image,push=true .
         docker buildx build --platform linux/amd64,linux/arm/v7 -t ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:latest --file ./Dockerfile --output type=image,push=true .
-        # docker build . -t ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.version }}
-        # docker push ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.version }}
-        # docker tag ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.version }} ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.branch }}
-        # docker push ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.branch }}
-        # docker tag ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.branch }} ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:latest
-        # docker tag ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.version }} ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:latest
-        # docker push ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:latest
+      # docker build . -t ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.version }}
+      # docker push ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.version }}
+      # docker tag ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.version }} ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.branch }}
+      # docker push ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.branch }}
+      # docker tag ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.branch }} ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:latest
+      # docker tag ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.version }} ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:latest
+      # docker push ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:latest
