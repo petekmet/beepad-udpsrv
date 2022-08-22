@@ -1,4 +1,4 @@
-FROM node:17 as builder
+FROM node as builder
 RUN uname -a && mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
 WORKDIR /home/node/app
 COPY package*.json ./
