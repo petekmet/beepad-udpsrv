@@ -39,9 +39,6 @@ jobs:
   CI-build-and-publish-docker-image:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        docker_target: [ 'x86_64:linux/amd64', 'arm:linux/arm/v7' ]
     needs: CI-build-set-versions
     steps:
     # Checkout the repo
