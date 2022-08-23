@@ -1,11 +1,7 @@
-import mongoose from "mongoose";
 import { env } from "process";
 
 export async function initDb() {
-    if(!env.GOOGLE_SERVICE_ACCOUNT){
-        env.GOOGLE_SERVICE_ACCOUNT = "./datastore-service-account.json";
-    }
-    console.log("env.GOOGLE_SERVICE_ACCOUNT:", env.GOOGLE_SERVICE_ACCOUNT);
+    console.log("env.GOOGLE_APPLICATION_CREDENTIALS:", env.GOOGLE_APPLICATION_CREDENTIALS);
 }
 
 export async function initMongoose() {
