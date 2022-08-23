@@ -1,7 +1,6 @@
 import { env } from "process";
 
 export async function initDb() {
-    console.log("env.GOOGLE_APPLICATION_CREDENTIALS:", env.GOOGLE_APPLICATION_CREDENTIALS);
 }
 
 export async function initMongoose() {
