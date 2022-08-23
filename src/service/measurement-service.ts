@@ -54,7 +54,7 @@ export async function saveMeasurementForDevice(connection: Connection, device: D
     console.log("Measurement:");
     console.log(measurement);
     device.lastMeasurement = measurement;
-    
+    device.downlinkData = "";
     
     // update device
     const repostory = connection.getRepository(Device);
