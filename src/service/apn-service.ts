@@ -57,7 +57,7 @@ function processUplinkData(
     if (packetHeader.packetType === 0) {
         const packet = uplinkPacket.decode(new Uint8Array(packetPayload), true);
         console.log("Decoded uplink packet type 0\n", packet);
-        const measurement = createMeasurementFromPacket(packet);
+        const measurement = createMeasurementFromPacket(packet, device.zeroWeight);
         processEmailAlerts(device, measurement);
         saveMeasurementForDevice(connection, device, measurement);
         

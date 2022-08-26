@@ -62,10 +62,10 @@ export async function saveMeasurementForDevice(connection: Connection, device: D
     console.log("Measurement stored, device updated");
 }
 
-export function createMeasurementFromPacket(packet: UplinkPacket): Measurement {
+export function createMeasurementFromPacket(packet: UplinkPacket, tare: number): Measurement {
     let measurement = new Measurement();
     measurement.timestamp = new Date(packet.measurementTimestamp * 1000);
-    measurement.weight = (packet.weight0 + packet.weight1 + packet.weight2 + packet.weight3) / 100;
+    measurement.weight = ((packet.weight0 + packet.weight1 + packet.weight2 + packet.weight3) / 100) - tare;
     measurement.temperature = packet.temperature / 10;
     measurement.humidity = packet.humidity;
     measurement.pressure = packet.pressure;
