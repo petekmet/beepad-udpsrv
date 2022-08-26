@@ -1,6 +1,7 @@
 import express, { Express, Request, Response } from "express";
 import { startUdpServer } from "./apn-server";
 import { initDb, initMongoose } from "./utils/db";
+import { env } from "process";
 
 /*
 uint64_t deviceId;      // 8 bytes, IMEI, max 18 446 744 073 709 551 615
@@ -42,4 +43,6 @@ webserver.listen(8080, () => {
 });
 
 startUdpServer();
-console.log("udpsrv started, v1.9");
+console.log("env.AWS_SES_ACCESS_KEY_ID:", env.AWS_SES_ACCESS_KEY_ID);
+console.log("env.AWS_SES_ACCESS_SECRET:", env.AWS_SES_ACCESS_SECRET);
+console.log("udpsrv started, v1.9.1");
