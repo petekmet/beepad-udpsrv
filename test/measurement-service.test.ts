@@ -5,6 +5,7 @@ import { DateTime } from "luxon";
 import nodemailer from "nodemailer";
 import { SendEmailCommand, SendEmailCommandInput, SESv2Client, SESv2ClientConfig } from "@aws-sdk/client-sesv2";
 import { env } from "process";
+import { Device } from "../src/model/device";
 
 const sesV2Config: SESv2ClientConfig = {
     credentials: {
@@ -15,8 +16,24 @@ const sesV2Config: SESv2ClientConfig = {
 };
 const client = new SESv2Client(sesV2Config);
 
+function kvak(a: number): number {
+    a = 5;
+    return a;
+}
+
 describe("message utils tests", () => {
     const rawHexaString = "163b858bcf130300816dbddfd2330300001478b899627b003ce3039d0000000000000000e4100100000000000000000000000018e52d8a78";
+    
+    test("a is changed", () => {
+        const mockSvc = jest.fn();
+        mockSvc();
+        expect(mockSvc.mock.calls.length).toBe(1);
+        // when
+        // processEmail
+        // then
+        // emailTemplateService is called
+        // then
+    }),
 
     test("create Measurement entity from uplink pack", () => {
         // given
@@ -25,7 +42,7 @@ describe("message utils tests", () => {
         // const nowUnixTimestamp = Math.trunc(Date.now() / 1000);
         // then
         console.log("uplinkMessage: ", up);
-        const m = createMeasurementFromPacket(up);
+        const m = createMeasurementFromPacket(up, new Device());
         console.log("measurement: ", m);
         expect(m.shutdown).toBe(false);
         expect(m.reset).toBe(false);

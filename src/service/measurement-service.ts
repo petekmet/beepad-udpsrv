@@ -62,10 +62,14 @@ export async function saveMeasurementForDevice(connection: Connection, device: D
     console.log("Measurement stored, device updated");
 }
 
-export function createMeasurementFromPacket(packet: UplinkPacket, tare: number): Measurement {
+export function createMeasurementFromPacket(packet: UplinkPacket, device: Device): Measurement {
     let measurement = new Measurement();
     measurement.timestamp = new Date(packet.measurementTimestamp * 1000);
-    measurement.weight = ((packet.weight0 + packet.weight1 + packet.weight2 + packet.weight3) / 100) - tare;
+    if(device.address == "603a858bcf130300e22ff8bad2330300") {
+        measurement.weight = ((packet.weight2 + packet.weight1 + packet.weight2 + packet.weight3) / 100) - device.zeroWeight;
+        console.log("manualy adjusted faulty sensor")
+    } else
+        measurement.weight = ((packet.weight0 + packet.weight1 + packet.weight2 + packet.weight3) / 100) - device.zeroWeight;
     measurement.temperature = packet.temperature / 10;
     measurement.humidity = packet.humidity;
     measurement.pressure = packet.pressure;

@@ -1,7 +1,10 @@
-import { SendEmailCommand, SendEmailCommandInput, SESv2Client, SESv2ClientConfig } from "@aws-sdk/client-sesv2";
+import { AccountDetails, SendEmailCommand, SendEmailCommandInput, SESv2Client, SESv2ClientConfig } from "@aws-sdk/client-sesv2";
+import { Connection, createConnection } from "ts-datastore-orm";
 import { env } from "process";
 import { Device } from "../model/device";
 import { Measurement } from "../model/measurement.entity";
+import { Site } from "../model/site.entity";
+import { Account } from "../model/account.entity";
 
 const sesV2Config: SESv2ClientConfig = {
     credentials: {
@@ -11,8 +14,7 @@ const sesV2Config: SESv2ClientConfig = {
     region: "eu-west-1",
 };
 
-export function processEmailAlerts(device: Device, measurement: Measurement) {
-    // check battery state
+export function processEmailAlerts(connection: Connection, device: Device, measurement: Measurement) {
     // check battery state
     if (measurement.battery > 3700 && device.batteryLow == true) {
         device.batteryLow = false;
@@ -31,12 +33,19 @@ export function processEmailAlerts(device: Device, measurement: Measurement) {
         if (Math.abs(deltaWeight) > 1) {
             measurement.alarm = true;
             // send alarm email
-            sendWeightAlertEmail(device, deltaWeight);
+            sendWeightAlertEmail(connection, device, deltaWeight);
         }
     }
 }
 
-async function sendWeightAlertEmail(device: Device, weightDelta: number) {
+async function getEmailAddressByDevice(connection: Connection, device: Device): Promise<string[]> { 
+    const s = await connection.getRepository(Site).query().filter("devices", deviceList => deviceList.eq(device!.getKey())).findMany();
+    s.flatMap(x=>connection.getRepository(Account).findOne(x._ancestorKey!))
+    return [];
+}
+
+async function sendWeightAlertEmail(connection: Connection, device: Device, weightDelta: number) {
+    const destination = getEmailAddressByDevice(connection, device);
     const client = new SESv2Client(sesV2Config);
     const templateData = {
         devicename: device.name,

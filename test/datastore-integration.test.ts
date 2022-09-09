@@ -4,11 +4,25 @@ import { Measurement } from "../src/model/measurement.entity";
 import { Year } from "../src/model/year.entity";
 import { Month } from "../src/model/month.entity";
 import { Day } from "../src/model/day.entity";
+import { Site } from "../src/model/site.entity";
+import { Account } from "../src/model/account.entity";
 import { initDb } from "../src/utils/db";
-import { moveMessagePortToContext } from "worker_threads";
+import { env } from "process";
 
 describe("Datastore integration test suite", () => {
+    test("stes filter by device", async() => {
+        const keyFilename = (process.env.GOOGLE_SERVICE_ACCOUNT ?? "./datastore-service-account.json");
+        const connection = createConnection({ keyFilename: keyFilename });
+        const deviceRepository = connection.getRepository(Device);
+        const device = await deviceRepository.query().filter("address", address => address.eq("163b858bcf130300606c8cded2330300")).findOne();
+        const site = await connection.getRepository(Site).query().filter("devices", x => x.eq(device!.getKey())).findMany();
+        
+        // const acc = (await connection.getRepository(Account).findOne(x!._ancestorKey!))?.email
+        const acc = site.map(async(s) => (await connection.getRepository(Account).findOne(s!._ancestorKey!))?.email);
 
+        // const a = await connection.getRepository(Account).findOne(site!._ancestorKey!);
+        console.log(acc.values);
+    }),
     test.skip("datastore t3", async () => {
         const nbiotComposedAddress = "163b858bcf130300606c8cded2330300";// "163b858bcf130300606c8cded2330300";
         await initDb();
