@@ -43,6 +43,6 @@ webserver.listen(8080, () => {
 });
 
 startUdpServer();
-console.log("env.AWS_SES_ACCESS_KEY_ID:", env.AWS_SES_ACCESS_KEY_ID);
-console.log("env.AWS_SES_ACCESS_SECRET:", env.AWS_SES_ACCESS_SECRET);
-console.log("udpsrv started, v1.9.1");
+// console.log("env.AWS_SES_ACCESS_KEY_ID:", env.AWS_SES_ACCESS_KEY_ID);
+// console.log("env.AWS_SES_ACCESS_SECRET:", env.AWS_SES_ACCESS_SECRET);
+console.log("udpsrv started, v1.9.2, at"+new Date());
