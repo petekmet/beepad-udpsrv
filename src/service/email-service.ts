@@ -52,7 +52,6 @@ async function getEmailAddressByDevice(connection: Connection, device: Device): 
 
 async function sendWeightAlertEmail(connection: Connection, device: Device, weightDelta: number) {
     const destination = await getEmailAddressByDevice(connection, device);
-    console.log("AWS_CREDS:", sesV2Config);
     console.log("Emails to be notified:", destination);
     const client = new SESv2Client(sesV2Config);
     const templateData = {
