@@ -38,14 +38,21 @@ export function processEmailAlerts(connection: Connection, device: Device, measu
     }
 }
 
-async function getEmailAddressByDevice(connection: Connection, device: Device): Promise<string[]> { 
-    const s = await connection.getRepository(Site).query().filter("devices", deviceList => deviceList.eq(device!.getKey())).findMany();
-    s.flatMap(x=>connection.getRepository(Account).findOne(x._ancestorKey!))
-    return [];
+async function getAccountBySite(connection: Connection, s: Site): Promise<Account | undefined> {
+    return await connection.getRepository(Account).findOne(s!._ancestorKey!);
+}
+
+async function getEmailAddressByDevice(connection: Connection, device: Device): Promise<string[]> {
+    // get sites with device
+    const siteList = await connection.getRepository(Site).query().filter("devices", x => x.eq(device!.getKey())).findMany();
+    // get accounts/emails with sites
+    const accList = await Promise.all(siteList.map( async(site) => await getAccountBySite(connection, site)));
+    return accList.map(account => account?.email ?? []).flat(1);
 }
 
 async function sendWeightAlertEmail(connection: Connection, device: Device, weightDelta: number) {
-    const destination = getEmailAddressByDevice(connection, device);
+    const destination = await getEmailAddressByDevice(connection, device);
+    console.log("Emails to be notified:", destination);
     const client = new SESv2Client(sesV2Config);
     const templateData = {
         devicename: device.name,

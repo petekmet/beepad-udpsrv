@@ -1,4 +1,4 @@
-import { createConnection, Repository } from "ts-datastore-orm";
+import { Connection, createConnection, Repository } from "ts-datastore-orm";
 import { Device } from "../src/model/device";
 import { Measurement } from "../src/model/measurement.entity";
 import { Year } from "../src/model/year.entity";
@@ -7,21 +7,30 @@ import { Day } from "../src/model/day.entity";
 import { Site } from "../src/model/site.entity";
 import { Account } from "../src/model/account.entity";
 import { initDb } from "../src/utils/db";
-import { env } from "process";
+import exp from "constants";
+
+ async function getAccount(connection: Connection, s: Site): Promise<Account | undefined> {
+    return await connection.getRepository(Account).findOne(s!._ancestorKey!);
+}
 
 describe("Datastore integration test suite", () => {
-    test("stes filter by device", async() => {
+    test("filter empty items", ()=>{
+        const emailList = [["a"], [], ["c","d"]];
+        const result = emailList.flat(1);
+        expect(result).toContain("a");
+        expect(result).toContain("c");
+        expect(result).toContain("d");
+        expect(result.length).toBe(3);
+    }),
+    test.skip("stes filter by device", async() => {
         const keyFilename = (process.env.GOOGLE_SERVICE_ACCOUNT ?? "./datastore-service-account.json");
         const connection = createConnection({ keyFilename: keyFilename });
         const deviceRepository = connection.getRepository(Device);
         const device = await deviceRepository.query().filter("address", address => address.eq("163b858bcf130300606c8cded2330300")).findOne();
         const site = await connection.getRepository(Site).query().filter("devices", x => x.eq(device!.getKey())).findMany();
-        
-        // const acc = (await connection.getRepository(Account).findOne(x!._ancestorKey!))?.email
-        const acc = site.map(async(s) => (await connection.getRepository(Account).findOne(s!._ancestorKey!))?.email);
-
-        // const a = await connection.getRepository(Account).findOne(site!._ancestorKey!);
-        console.log(acc.values);
+        const accList = await Promise.all(site.map( async(s) => await getAccount(connection, s)));
+        const emailList = accList.map( a => a?.email ).flat(1);
+        expect(accList[0]?.name).toBe("Včelnica Vladimír Kmeť");
     }),
     test.skip("datastore t3", async () => {
         const nbiotComposedAddress = "163b858bcf130300606c8cded2330300";// "163b858bcf130300606c8cded2330300";
