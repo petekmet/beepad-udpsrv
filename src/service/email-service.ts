@@ -57,7 +57,7 @@ async function sendWeightAlertEmail(connection: Connection, device: Device, weig
     const templateData = {
         devicename: device.name,
         deviceid: device._id,
-        weight: weightDelta
+        weight: weightDelta.toFixed(1)
     };
     const params: SendEmailCommandInput = {
         Content: {
