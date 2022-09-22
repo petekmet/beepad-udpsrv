@@ -5,6 +5,7 @@ import { Device } from "../model/device";
 import { Measurement } from "../model/measurement.entity";
 import { Site } from "../model/site.entity";
 import { Account } from "../model/account.entity";
+import { LogEmail } from "../model/log-email.entity";
 
 const sesV2Config: SESv2ClientConfig = {
     credentials: {
@@ -59,11 +60,12 @@ async function sendWeightAlertEmail(connection: Connection, device: Device, weig
         deviceid: device._id,
         weight: weightDelta.toFixed(1)
     };
+    const templateDataJson = JSON.stringify(templateData);
     const params: SendEmailCommandInput = {
         Content: {
             Template: {
                 TemplateName: "SK_WeightAlertTemplate",
-                TemplateData: JSON.stringify(templateData)
+                TemplateData: templateDataJson
             }
         },
         Destination: {
@@ -72,5 +74,15 @@ async function sendWeightAlertEmail(connection: Connection, device: Device, weig
         FromEmailAddress: "BeePad <info@mybeepad.com>",
     }
     const command = new SendEmailCommand(params);
-    await client.send(command);
+    const sendPromise = client.send(command);
+
+    // log email sending to db
+    const logEntity = new LogEmail();
+    logEntity._ancestorKey = device.getKey();
+    logEntity.destination = destination;
+    logEntity.timestamp = new Date();
+    logEntity.templateId = params.Content?.Template?.TemplateName!;
+    logEntity.content = templateDataJson;
+    const logInsertPromise = connection.getRepository(LogEmail).insert(logEntity);
+    await Promise.all([sendPromise, logInsertPromise]);
 }
