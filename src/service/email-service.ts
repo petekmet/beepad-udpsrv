@@ -69,7 +69,7 @@ async function sendWeightAlertEmail(connection: Connection, device: Device, weig
             }
         },
         Destination: {
-            ToAddresses: ["peter.kmet@t16.biz"]
+            ToAddresses: destination // ["peter.kmet@t16.biz"]
         },
         FromEmailAddress: "BeePad <info@mybeepad.com>",
     }
