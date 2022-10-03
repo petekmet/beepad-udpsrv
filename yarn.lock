@@ -4869,10 +4869,10 @@ strip-json-comments@~2.0.1:
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-2.0.1.tgz#3c531942e908c2697c0ec344858c286c7ca0a60a"
   integrity sha1-PFMZQukIwml8DsNEhYwobHygpgo=
 
-struct-buffer@^5.1.3:
-  version "5.1.3"
-  resolved "https://registry.yarnpkg.com/struct-buffer/-/struct-buffer-5.1.3.tgz#0cba4416a30d85ce3e471366a51ac9656b0fe137"
-  integrity sha512-GS1t44GLm7XHZn8Oy5209aAfEOKslIFrB4/RmChj5ID/kTZX0bF+zj8c3fD+Jaxda0Uaqr5jMOYYX9oPAvjcVQ==
+struct-buffer@^5.2.0:
+  version "5.2.0"
+  resolved "https://registry.yarnpkg.com/struct-buffer/-/struct-buffer-5.2.0.tgz#97ebe45e95159515c3e41ae3c0c5127c3e0807b2"
+  integrity sha512-OlLfj+qDYtvA16VqrvRqaFr2rbToKmkPVcEVulvb0Y+6HrsIIwpDg6eFA42os4t5Hxo94wgzTc5K+CG0pS9hsw==
 
 stubs@^3.0.0:
   version "3.0.0"
