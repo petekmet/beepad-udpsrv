@@ -54,35 +54,37 @@ async function getEmailAddressByDevice(connection: Connection, device: Device): 
 async function sendWeightAlertEmail(connection: Connection, device: Device, weightDelta: number) {
     const destination = await getEmailAddressByDevice(connection, device);
     console.log("Emails to be notified:", destination);
-    const client = new SESv2Client(sesV2Config);
-    const templateData = {
-        devicename: device.name,
-        deviceid: device._id,
-        weight: weightDelta.toFixed(1)
-    };
-    const templateDataJson = JSON.stringify(templateData);
-    const params: SendEmailCommandInput = {
-        Content: {
-            Template: {
-                TemplateName: "SK_WeightAlertTemplate",
-                TemplateData: templateDataJson
-            }
-        },
-        Destination: {
-            ToAddresses: destination // ["peter.kmet@t16.biz"]
-        },
-        FromEmailAddress: "BeePad <info@mybeepad.com>",
-    }
-    const command = new SendEmailCommand(params);
-    const sendPromise = client.send(command);
+    if(destination.length > 0) {
+        const client = new SESv2Client(sesV2Config);
+        const templateData = {
+            devicename: device.name,
+            deviceid: device._id,
+            weight: weightDelta.toFixed(1)
+        };
+        const templateDataJson = JSON.stringify(templateData);
+        const params: SendEmailCommandInput = {
+            Content: {
+                Template: {
+                    TemplateName: "SK_WeightAlertTemplate",
+                    TemplateData: templateDataJson
+                }
+            },
+            Destination: {
+                ToAddresses: destination // ["peter.kmet@t16.biz"]
+            },
+            FromEmailAddress: "BeePad <info@mybeepad.com>",
+        }
+        const command = new SendEmailCommand(params);
+        const sendPromise = client.send(command);
 
-    // log email sending to db
-    const logEntity = new LogEmail();
-    logEntity._ancestorKey = device.getKey();
-    logEntity.destination = destination;
-    logEntity.timestamp = new Date();
-    logEntity.templateId = params.Content?.Template?.TemplateName!;
-    logEntity.content = templateDataJson;
-    const logInsertPromise = connection.getRepository(LogEmail).insert(logEntity);
-    await Promise.all([sendPromise, logInsertPromise]);
+        // log email sending to db
+        const logEntity = new LogEmail();
+        logEntity._ancestorKey = device.getKey();
+        logEntity.destination = destination;
+        logEntity.timestamp = new Date();
+        logEntity.templateId = params.Content?.Template?.TemplateName!;
+        logEntity.content = templateDataJson;
+        const logInsertPromise = connection.getRepository(LogEmail).insert(logEntity);
+        await Promise.all([sendPromise, logInsertPromise]);
+    }
 }
