@@ -1,7 +1,6 @@
 import express, { Express, Request, Response } from "express";
 import { startUdpServer } from "./apn-server";
 import { initDb, initMongoose } from "./utils/db";
-import { env } from "process";
 
 async function healthMethod(req: Request, res: Response) {
     res.send("OK3");
