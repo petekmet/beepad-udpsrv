@@ -18,8 +18,9 @@ export function createDownlinkMessage(packetHeader: UplinkPacketHeader, downlink
         packetType: packetType,
         packetLength: packetLength,
     }, true);
-    console.log("Downlink payload:", payload);
-    return Buffer.concat([Buffer.from(header.buffer), Buffer.from(payload)]);
+    let outputBuffer = Buffer.concat([Buffer.from(header.buffer), Buffer.from(payload)]);
+    console.log("Downlink buffer:", outputBuffer);
+    return outputBuffer;
 }
 
 export function messageWithMac(message: Buffer, key: Buffer): Buffer {

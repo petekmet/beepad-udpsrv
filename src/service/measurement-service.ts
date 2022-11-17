@@ -51,15 +51,13 @@ export async function saveMeasurementForDevice(connection: Connection, device: D
 
     measurement._ancestorKey = d.getKey();
     measurement = await measurementRepo.insert(measurement);
-    console.log("Measurement:");
-    console.log(measurement);
     device.lastMeasurement = measurement;
     device.downlinkData = "";
     
     // update device
     const repostory = connection.getRepository(Device);
     await repostory.update(device);
-    console.log("Measurement stored, device updated");
+    console.log("Measurement", measurement._id, "stored, device", device._id, "updated");
 }
 
 export function createMeasurementFromPacket(packet: UplinkPacket, device: Device): Measurement {
