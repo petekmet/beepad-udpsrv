@@ -30,7 +30,9 @@ export class Measurement extends BaseEntity{
     @Field({generateId: true})
     public _id: number = 0;
     @Field({index: true})
-    public timestamp: Date;
+    public timestamp: Date; // timestamp of when Measurement was executed (from on-device clock)
+    @Field({index: true})
+    public asOn: Date; // timestamp of when Measurement entered our system
     @Field()
     public weight: number = 0;
     @Field()

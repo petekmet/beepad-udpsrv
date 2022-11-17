@@ -26,8 +26,9 @@ export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo
     const connection = createConnection({ keyFilename: process.env.GOOGLE_SERVICE_ACCOUNT! });
     const repostory = connection.getRepository(Device);
     const d = await repostory.query().filter("address", nbiotComposedAddress).findOne();
-    console.log("Device properties:", d);
+    
     if (d) {
+        console.log("Device:", d._id, d.address, d.name);
         // verify cmac
         const key = Buffer.from(d!.nwkSKey, "hex");
         const cmac = msg.subarray(msg.length - 4);
@@ -35,10 +36,9 @@ export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo
         const aesCmac = new AesCmac(key);
         const result = aesCmac.calculate(msg.subarray(0, msg.length - 4));
         const calculatedCmacNumber: number = result.subarray(0, 4).readInt32LE();
-        const downlinkData = d?.downlinkData ? Buffer.from(d.downlinkData, "hex") : undefined;
-
         if (calculatedCmacNumber == cmacNumber) {
             console.log("Cmac ok");
+            const downlinkData = d?.downlinkData ? Buffer.from(d.downlinkData, "hex") : undefined;
             const packetPayload = msg.subarray(17); // skip header at pos 17
             return processUplinkData(connection, d, packetHeader, packetPayload, downlinkData);
         } else {
@@ -67,6 +67,6 @@ function processUplinkData(
             const key = Buffer.from(device.nwkSKey, "hex");
             return messageWithMac(createDownlinkMessage(packetHeader, downlinkData), key);
         }
-        console.log("Measurement on", new Date(packet.measurementTimestamp * 1000));
+        console.log("Measurement on", new Date(packet.measurementTimestamp * 1000), "saved on", measurement.asOn);
     }
 }

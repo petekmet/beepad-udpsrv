@@ -64,6 +64,7 @@ export async function saveMeasurementForDevice(connection: Connection, device: D
 
 export function createMeasurementFromPacket(packet: UplinkPacket, device: Device): Measurement {
     let measurement = new Measurement();
+    measurement.asOn = new Date();
     measurement.timestamp = new Date(packet.measurementTimestamp * 1000);
     measurement.weight = ((packet.weight0 + packet.weight1 + packet.weight2 + packet.weight3) / 100) - device.zeroWeight;
     measurement.temperature = packet.temperature / 10;
