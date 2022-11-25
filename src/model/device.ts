@@ -1,4 +1,3 @@
-import { prop } from "@typegoose/typegoose";
 import { BaseEntity, Entity, Field } from "ts-datastore-orm";
 import { Measurement } from "./measurement.entity";
 import { Tare } from "./tare.entity";
