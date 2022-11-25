@@ -19,4 +19,4 @@ webserver.listen(8080, () => {
 });
 
 startUdpServer();
-console.log("udpsrv started, v1.10, at", new Date());
+console.log("udpsrv started, v1.10.2, at", new Date());

@@ -60,13 +60,17 @@ function processUplinkData(
         const packet = uplinkPacket.decode(new Uint8Array(packetPayload), true);
         console.log("Decoded uplink packet type 0\n", packet);
         const measurement = createMeasurementFromPacket(packet, device);
-        processEmailAlerts(connection, device, measurement);
-        saveMeasurementForDevice(connection, device, measurement);
-        
-        if (packet.flags.downlinkRequest || downlinkData) {
-            const key = Buffer.from(device.nwkSKey, "hex");
-            return messageWithMac(createDownlinkMessage(packetHeader, downlinkData), key);
+        if(measurement.cnt != device.lastMeasurement.cnt){
+            processEmailAlerts(connection, device, measurement);
+            saveMeasurementForDevice(connection, device, measurement);
+            
+            if (packet.flags.downlinkRequest || downlinkData) {
+                const key = Buffer.from(device.nwkSKey, "hex");
+                return messageWithMac(createDownlinkMessage(packetHeader, downlinkData), key);
+            }
+            console.log("Measurement on", new Date(packet.measurementTimestamp * 1000), "saved on", measurement.asOn);
+        } else {
+            console.log("WARNING: duplicate last cnt, no save")
         }
-        console.log("Measurement on", new Date(packet.measurementTimestamp * 1000), "saved on", measurement.asOn);
     }
 }
