@@ -20,7 +20,7 @@ export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo
     const packetHeader: UplinkPacketHeader = uplinkPacketHeader.decode(msg, true);
     const nbiotComposedAddress: string = msg.subarray(0, 16).toString("hex");
     console.log("NB-IoT device composed address:", nbiotComposedAddress);
-    console.log("Decoded packet header:", packetHeader);
+    // console.log("Decoded packet header:", packetHeader);
 
     // get device properties
     const connection = createConnection({ keyFilename: process.env.GOOGLE_SERVICE_ACCOUNT! });

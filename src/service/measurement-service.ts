@@ -9,7 +9,7 @@ import { ExtSensor } from "../model/ext-sensor.entity";
 import luxon, { DateTime } from "luxon";
 
 export async function saveMeasurementForDevice(connection: Connection, device: Device, measurement: Measurement) {
-    const dateOfMeasurement = measurement.timestamp;
+    const dateOfMeasurement = device.deviceClass > 2 ? measurement.timestamp : new Date();
     const timeZone = device.timeZone ? device.timeZone : "Europe/Prague"; // default device timezone
     const zonedDateTime = DateTime.fromSeconds(dateOfMeasurement.getTime() / 1000).setZone(timeZone);
 

@@ -10,8 +10,8 @@ const webserver: Express = express();
 webserver.route("/health").get(healthMethod);
 // webserver.route("/devmsg").get(sendMessageToDevice);
 
-initDb();
-initMongoose();
+// initDb();
+// initMongoose();
 
 // TODO: extract to a separate file
 webserver.listen(8080, () => {
@@ -19,4 +19,4 @@ webserver.listen(8080, () => {
 });
 
 startUdpServer();
-console.log("udpsrv started, v1.10.2, at", new Date());
+console.log("udpsrv started, v1.10.3, at", new Date());
