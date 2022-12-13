@@ -6,10 +6,11 @@ import { Month } from "../model/month.entity";
 import { Day } from "../model/day.entity";
 import { UplinkPacket } from "../utils/structbuffer";
 import { ExtSensor } from "../model/ext-sensor.entity";
-import luxon, { DateTime } from "luxon";
+import { DateTime, Interval } from "luxon";
 
 export async function saveMeasurementForDevice(connection: Connection, device: Device, measurement: Measurement) {
-    const dateOfMeasurement = device.deviceClass > 2 ? measurement.timestamp : new Date();
+    // if class < 3 -> check delta (dateOf, dateOn) > 8 hours -> use dateOf = dateOn else dateOf = dateOf
+    const dateOfMeasurement = device.deviceClass > 2 ? measurement.timestamp : createDateOfMeasurement(measurement.timestamp, new Date());
     const timeZone = device.timeZone ? device.timeZone : "Europe/Prague"; // default device timezone
     const zonedDateTime = DateTime.fromSeconds(dateOfMeasurement.getTime() / 1000).setZone(timeZone);
 
@@ -84,4 +85,9 @@ export function createMeasurementFromPacket(packet: UplinkPacket, device: Device
     measurement.rssi = packet.signalStrength;
     measurement.shutdown = packet.flags.shutdown == true ? true : false;
     return measurement;
+}
+
+export function createDateOfMeasurement(timestamp: Date, timestampNow: Date): Date {
+    const delta = Interval.fromDateTimes(DateTime.fromJSDate(timestamp), DateTime.fromJSDate(timestampNow));
+    return delta.toDuration('days').days >= 1 ? timestampNow : timestamp;
 }

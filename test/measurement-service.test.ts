@@ -1,7 +1,7 @@
-import { createMeasurementFromPacket } from "../src/service/measurement-service";
+import { createMeasurementFromPacket, createDateOfMeasurement } from "../src/service/measurement-service";
 import { uplinkPacket } from "../src/utils/structbuffer";
 import { sbytes as b } from "struct-buffer";
-import { DateTime } from "luxon";
+import { DateTime, Duration } from "luxon";
 import nodemailer from "nodemailer";
 import { SendEmailCommand, SendEmailCommandInput, SESv2Client, SESv2ClientConfig } from "@aws-sdk/client-sesv2";
 import { env } from "process";
@@ -33,7 +33,7 @@ describe("message utils tests", () => {
         // then
         // emailTemplateService is called
         // then
-    }),
+    });
 
     test("create Measurement entity from uplink pack", () => {
         // given
@@ -58,6 +58,22 @@ describe("message utils tests", () => {
         expect(localTimestamp.day).toBe(23);
         expect(localTimestamp.month).toBe(6);
         expect(localTimestamp.year).toBe(2022);
+    });
+
+    test("when asOf more than 1 day off from now then return now", () => {
+        // given
+        const now = new Date();
+        const d1 = DateTime.fromJSDate(now).minus(Duration.fromObject({days:2}));
+        const result = createDateOfMeasurement(d1.toJSDate(), now);
+        expect(result).toBe(now);
+    });
+
+    test("when asOf less than 1 day off from now then return d1", () => {
+        // given
+        const now = new Date();
+        const d1 = DateTime.fromJSDate(now).minus(Duration.fromObject({hours:12}));
+        const result = createDateOfMeasurement(d1.toJSDate(), now);
+        expect(result.getTime()).toBe(d1.toJSDate().getTime());
     });
 
     test.skip("nodemailer", async () => {
