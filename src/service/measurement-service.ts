@@ -9,8 +9,7 @@ import { ExtSensor } from "../model/ext-sensor.entity";
 import { DateTime, Interval } from "luxon";
 
 export async function saveMeasurementForDevice(connection: Connection, device: Device, measurement: Measurement) {
-    // if class < 3 -> check delta (dateOf, dateOn) > 8 hours -> use dateOf = dateOn else dateOf = dateOf
-    const dateOfMeasurement = device.deviceClass > 2 ? measurement.timestamp : createDateOfMeasurement(measurement.timestamp, new Date());
+    const dateOfMeasurement = measurement.timestamp;
     const timeZone = device.timeZone ? device.timeZone : "Europe/Prague"; // default device timezone
     const zonedDateTime = DateTime.fromSeconds(dateOfMeasurement.getTime() / 1000).setZone(timeZone);
 
@@ -62,9 +61,12 @@ export async function saveMeasurementForDevice(connection: Connection, device: D
 }
 
 export function createMeasurementFromPacket(packet: UplinkPacket, device: Device): Measurement {
-    let measurement = new Measurement();
+    const asOf = new Date(packet.measurementTimestamp * 1000);
+    // if class < 3 -> check delta (dateOf, dateOn) > 8 hours -> use dateOf = dateOn else dateOf = dateOf
+    const dateOfMeasurement = device.deviceClass > 2 ? asOf : createDateOfMeasurement(asOf, new Date());
+    const measurement = new Measurement();
     measurement.asOn = new Date();
-    measurement.timestamp = new Date(packet.measurementTimestamp * 1000);
+    measurement.timestamp = dateOfMeasurement;
     measurement.weight = ((packet.weight0 + packet.weight1 + packet.weight2 + packet.weight3) / 100) - device.zeroWeight;
     measurement.temperature = packet.temperature / 10;
     measurement.humidity = packet.humidity;
