@@ -89,5 +89,7 @@ export function createMeasurementFromPacket(packet: UplinkPacket, device: Device
 
 export function createDateOfMeasurement(timestamp: Date, timestampNow: Date): Date {
     const delta = Interval.fromDateTimes(DateTime.fromJSDate(timestamp), DateTime.fromJSDate(timestampNow));
-    return delta.toDuration('days').days >= 1 ? timestampNow : timestamp;
+    const spread = delta.toDuration('days').days;
+    console.log("asOf to now days:", spread);
+    return  spread >= 1 ? timestampNow : timestamp;
 }
