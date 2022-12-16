@@ -48,4 +48,4 @@ jobs:
       run: echo "::set-output name=branch::${GITHUB_REF##*/}"
       id: branch
     - name: list docker images
-      run: docker -H ssh://pi@gw.t16.biz log udpsrv
+      run: docker -H ssh://pi@gw.t16.biz logs udpsrv
