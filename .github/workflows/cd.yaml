@@ -39,7 +39,9 @@ jobs:
     steps:
     # Set App version
     - name: version
-      run: echo "::set-output name=version::$(date +'%Y-%m-%d.')${{ github.run_number }}"
+      run: |
+        echo "{version}={$(date +'%Y-%m-%d.')${{ github.run_number }}}" >> $GITHUB_OUTPUT
+        echo $GITHUB_OUTPUT
       id: version
     # Set build branch name
     - name: generate tag with branch name
