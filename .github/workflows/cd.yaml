@@ -1,0 +1,47 @@
+name: udpsrv-CD
+
+# This workflow is triggered on push to the 'content-web' directory of the  main branch of the repository
+on:
+#  push:
+#    branches:
+#    - master
+#    paths:
+#    - '.github/workflows/encall-comparatorCD.yml'
+#  workflow_run:
+#    workflows: [encall-helm-CI]
+#    branches:
+#    - master
+#    types:
+#    - completed
+#  repository_dispatch:
+#    types: [trigger-deapadminCI, trigger-helmCI]
+
+  # Configure workflow to also support triggering manually
+  workflow_dispatch:
+
+env:
+  # env for container build
+  APP_NAME: 'udpsrv'
+  REPO_NAME: 'petekmet'
+  CONTAINER_REGISTRY: 'docker.io'
+  DOCKERFILE_PATH: '.'
+  TAG: '${{ github.run_id  }}'
+
+# Jobs define the actions that take place when code is pushed to the main branch
+jobs:
+
+  CI-build-set-versions:
+    name: Set versions
+    runs-on: ubuntu-latest
+    outputs: 
+      version: ${{ steps.version.outputs.version }}
+      branch: ${{ steps.branch.outputs.branch }}
+    steps:
+    # Set App version
+    - name: version
+      run: echo "::set-output name=version::$(date +'%Y-%m-%d.')${{ github.run_number }}"
+      id: version
+    # Set build branch name
+    - name: generate tag with branch name
+      run: echo "::set-output name=branch::${GITHUB_REF##*/}"
+      id: branch
