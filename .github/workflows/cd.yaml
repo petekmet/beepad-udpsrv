@@ -37,9 +37,7 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       branch: ${{ steps.branch.outputs.branch }}
     steps:
-    - uses: webfactory/ssh-agent@v0.7.0
-      with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+    
     # Set App version
     - name: version
       run: |
@@ -50,5 +48,12 @@ jobs:
     - name: generate tag with branch name
       run: echo "::set-output name=branch::${GITHUB_REF##*/}"
       id: branch
-    - name: list docker images
-      run: docker -H ssh://pi@gw.t16.biz logs udpsrv
+
+    - name: running docker info
+        uses: ironhalik/docker-over-ssh-action@v1
+        with:
+          user: pi
+          host: gw.t16.biz
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22 # Defaults to 22
+          script: docker logs udpsrv
