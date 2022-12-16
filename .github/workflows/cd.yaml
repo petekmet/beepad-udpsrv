@@ -50,10 +50,10 @@ jobs:
       id: branch
 
     - name: running docker info
-        uses: ironhalik/docker-over-ssh-action@v1
-        with:
-          user: pi
-          host: gw.t16.biz
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22 # Defaults to 22
-          script: docker logs udpsrv
+      uses: ironhalik/docker-over-ssh-action@v1
+      with:
+        user: pi
+        host: gw.t16.biz
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22 # Defaults to 22
+        script: docker logs udpsrv
