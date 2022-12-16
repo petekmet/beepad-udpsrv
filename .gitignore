@@ -3,3 +3,5 @@ dist/
 datastore-service-account.json
 test-env.ps1
 test-env.sh
+id_rsa-github
+id_rsa-github.pub

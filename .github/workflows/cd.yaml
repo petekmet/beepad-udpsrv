@@ -56,4 +56,4 @@ jobs:
         host: gw.t16.biz
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22 # Defaults to 22
-        script: docker logs udpsrv
+        script: docker ps -a
