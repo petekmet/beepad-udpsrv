@@ -53,7 +53,7 @@ export async function saveMeasurementForDevice(connection: Connection, device: D
     measurement = await measurementRepo.insert(measurement);
     device.lastMeasurement = measurement;
     device.downlinkData = "";
-    
+
     // update device
     const repostory = connection.getRepository(Device);
     await repostory.update(device);
@@ -92,6 +92,8 @@ export function createMeasurementFromPacket(packet: UplinkPacket, device: Device
 export function createDateOfMeasurement(timestamp: Date, timestampNow: Date): Date {
     const delta = Interval.fromDateTimes(DateTime.fromJSDate(timestamp), DateTime.fromJSDate(timestampNow));
     const spread = delta.toDuration('days').days;
-    console.log("asOf to now days:", spread);
-    return  spread >= 1 ? timestampNow : timestamp;
+    if (spread >= 1) { 
+        console.log("WARNING: Fixing asOf to now. Rxcess clock skew in days:", spread); 
+    }
+    return spread >= 1 ? timestampNow : timestamp;
 }

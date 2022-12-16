@@ -26,7 +26,7 @@ export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo
     const connection = createConnection({ keyFilename: process.env.GOOGLE_SERVICE_ACCOUNT! });
     const repostory = connection.getRepository(Device);
     const d = await repostory.query().filter("address", nbiotComposedAddress).findOne();
-    
+
     if (d) {
         console.log("Device:", d._id, d.address, d.name);
         // verify cmac
@@ -60,10 +60,10 @@ function processUplinkData(
         const packet = uplinkPacket.decode(new Uint8Array(packetPayload), true);
         console.log("Decoded uplink packet type 0\n", packet);
         const measurement = createMeasurementFromPacket(packet, device);
-        if(measurement.cnt != device.lastMeasurement.cnt){
+        if (measurement.cnt != device.lastMeasurement.cnt) {
             processEmailAlerts(connection, device, measurement);
             saveMeasurementForDevice(connection, device, measurement);
-            
+
             if (packet.flags.downlinkRequest || downlinkData) {
                 const key = Buffer.from(device.nwkSKey, "hex");
                 return messageWithMac(createDownlinkMessage(packetHeader, downlinkData), key);
