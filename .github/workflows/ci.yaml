@@ -6,7 +6,7 @@ on:
     - master
   
   # Configure workflow to also support triggering manually
-  workflow_dispatch:
+  # workflow_dispatch:
 
 # Environment variables are defined so that they can be used throughout the job definitions.
 env:
