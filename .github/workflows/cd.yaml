@@ -42,7 +42,7 @@ jobs:
     - name: version
       run: |
         echo "{version}={$(date +'%Y-%m-%d.')${{ github.run_number }}}" >> $GITHUB_OUTPUT
-        echo $GITHUB_OUTPUT
+        cat $GITHUB_OUTPUT
       id: version
     # Set build branch name
     - name: generate tag with branch name
