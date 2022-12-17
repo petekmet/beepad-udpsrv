@@ -30,7 +30,7 @@ env:
 # Jobs define the actions that take place when code is pushed to the main branch
 jobs:
 
-  CI-build-set-versions:
+  CD-build-set-versions:
     name: Set versions
     runs-on: ubuntu-latest
     outputs: 
@@ -40,21 +40,22 @@ jobs:
     
     # Set App version
     - name: version
-      run: |
-        echo "{version}={$(date +'%Y-%m-%d.')${{ github.run_number }}}" >> $GITHUB_OUTPUT
-        cat $GITHUB_OUTPUT
+      run: echo "{version}={$(date +'%Y-%m-%d.')${{ github.run_number }}}" >> $GITHUB_OUTPUT
       id: version
     # Set build branch name
     - name: generate tag with branch name
-      run: echo "::set-output name=branch::${GITHUB_REF##*/}"
+      # run: echo "::set-output name=branch::${GITHUB_REF##*/}"
+      run: echo "{branch}={${GITHUB_REF##*/}}"
       id: branch
 
+  CD-run-remote-docker:
     # Diag print
     - name: print version
-      run: echo ${{ needs.CI-build-set-versions.outputs.version }}
+      run: echo ${{ needs.CD-build-set-versions.outputs.version }}
 
     - name: print branch
-      run: echo ${{ needs.CI-build-set-versions.outputs.branch }}
+      run: echo ${{ needs.CD-build-set-versions.outputs.branch }}
+
     - name: running docker info
       uses: ironhalik/docker-over-ssh-action@v1
       with:

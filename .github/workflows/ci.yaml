@@ -33,7 +33,8 @@ jobs:
       id: version
     # Set build branch name
     - name: generate tag with branch name
-      run: echo "::set-output name=branch::${GITHUB_REF##*/}"
+      # run: echo "::set-output name=branch::${GITHUB_REF##*/}"
+      run: echo "{branch}={${GITHUB_REF##*/}}"
       id: branch
 
   CI-build-and-publish-docker-image:
