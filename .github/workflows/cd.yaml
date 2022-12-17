@@ -49,6 +49,12 @@ jobs:
       run: echo "::set-output name=branch::${GITHUB_REF##*/}"
       id: branch
 
+    # Diag print
+    - name: print version
+      run: echo ${{ needs.CI-build-set-versions.outputs.version }}
+
+    - name: print branch
+      run: echo ${{ needs.CI-build-set-versions.outputs.branch }}
     - name: running docker info
       uses: ironhalik/docker-over-ssh-action@v1
       with:
