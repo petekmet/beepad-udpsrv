@@ -60,7 +60,9 @@ function processUplinkData(
         const packet = uplinkPacket.decode(new Uint8Array(packetPayload), true);
         console.log("Decoded uplink packet type 0\n", packet);
         const measurement = createMeasurementFromPacket(packet, device);
-        if (measurement.cnt != device.lastMeasurement.cnt) {
+        if(device.lastMeasurement && device.lastMeasurement.cnt == measurement.cnt) {
+            console.log("WARNING: duplicate last cnt, no save")
+        }else{
             processEmailAlerts(connection, device, measurement);
             saveMeasurementForDevice(connection, device, measurement);
 
@@ -69,8 +71,6 @@ function processUplinkData(
                 return messageWithMac(createDownlinkMessage(packetHeader, downlinkData), key);
             }
             console.log("Measurement on", new Date(packet.measurementTimestamp * 1000), "saved on", measurement.asOn);
-        } else {
-            console.log("WARNING: duplicate last cnt, no save")
         }
     }
 }
