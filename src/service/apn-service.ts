@@ -28,7 +28,7 @@ export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo
     const d = await repostory.query().filter("address", nbiotComposedAddress).findOne();
 
     if (d) {
-        console.log("Device:", d._id, d.address, d.name);
+        console.log(new Date(), "Device:", d._id, d.address, d.name);
         // verify cmac
         const key = Buffer.from(d!.nwkSKey, "hex");
         const cmac = msg.subarray(msg.length - 4);
@@ -36,8 +36,12 @@ export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo
         const aesCmac = new AesCmac(key);
         const result = aesCmac.calculate(msg.subarray(0, msg.length - 4));
         const calculatedCmacNumber: number = result.subarray(0, 4).readInt32LE();
-        if (calculatedCmacNumber == cmacNumber) {
-            console.log("Cmac ok");
+        if (calculatedCmacNumber == cmacNumber || d.deviceClass == 4) {
+            if(d.deviceClass == 4){
+                console.log("WARNING: Cmac check skipped, device class 4");
+            }else{
+                console.log("Cmac ok");
+            }
             const downlinkData = d?.downlinkData ? Buffer.from(d.downlinkData, "hex") : undefined;
             const packetPayload = msg.subarray(17); // skip header at pos 17
             return processUplinkData(connection, d, packetHeader, packetPayload, downlinkData);
