@@ -37,9 +37,9 @@ export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo
         const result = aesCmac.calculate(msg.subarray(0, msg.length - 4));
         const calculatedCmacNumber: number = result.subarray(0, 4).readInt32LE();
         if (calculatedCmacNumber == cmacNumber || d.deviceClass == 4) {
-            if(d.deviceClass == 4){
+            if (d.deviceClass == 4) {
                 console.log("WARNING: Cmac check skipped, device class 4");
-            }else{
+            } else {
                 console.log("Cmac ok");
             }
             const downlinkData = d?.downlinkData ? Buffer.from(d.downlinkData, "hex") : undefined;
@@ -61,20 +61,24 @@ function processUplinkData(
     downlinkData?: Buffer
 ): Buffer | undefined {
     if (packetHeader.packetType === 0) {
-        const packet = uplinkPacket.decode(new Uint8Array(packetPayload), true);
-        console.log("Decoded uplink packet type 0\n", packet);
-        const measurement = createMeasurementFromPacket(packet, device);
-        if(device.lastMeasurement && device.lastMeasurement.cnt == measurement.cnt) {
-            console.log("WARNING: duplicate last cnt, no save")
-        }else{
-            processEmailAlerts(connection, device, measurement);
-            saveMeasurementForDevice(connection, device, measurement);
+        try {
+            const packet = uplinkPacket.decode(new Uint8Array(packetPayload), true);
+            console.log("Decoded uplink packet type 0\n", packet);
+            const measurement = createMeasurementFromPacket(packet, device);
+            if (device.lastMeasurement && device.lastMeasurement.cnt == measurement.cnt) {
+                console.log("WARNING: duplicate last cnt, no save")
+            } else {
+                processEmailAlerts(connection, device, measurement);
+                saveMeasurementForDevice(connection, device, measurement);
 
-            if (packet.flags.downlinkRequest || downlinkData) {
-                const key = Buffer.from(device.nwkSKey, "hex");
-                return messageWithMac(createDownlinkMessage(packetHeader, downlinkData), key);
+                if (packet.flags.downlinkRequest || downlinkData) {
+                    const key = Buffer.from(device.nwkSKey, "hex");
+                    return messageWithMac(createDownlinkMessage(packetHeader, downlinkData), key);
+                }
+                console.log("Measurement on", new Date(packet.measurementTimestamp * 1000), "saved on", measurement.asOn);
             }
-            console.log("Measurement on", new Date(packet.measurementTimestamp * 1000), "saved on", measurement.asOn);
+        } catch {
+            console.log(new Date(), "WARNING: could not decode packet");
         }
     }
 }
