@@ -69,9 +69,9 @@ function processUplinkData(
                 console.log("WARNING: duplicate last cnt, no save")
             } else {
                 processEmailAlerts(connection, device, measurement);
-                saveMeasurementForDevice(connection, device, measurement);
+                saveMeasurementForDevice(connection, device, measurement, packet.flags.downlinkRequest);
 
-                if (packet.flags.downlinkRequest || downlinkData) {
+                if (packet.flags.downlinkRequest && downlinkData) {
                     const key = Buffer.from(device.nwkSKey, "hex");
                     return messageWithMac(createDownlinkMessage(packetHeader, downlinkData), key);
                 }

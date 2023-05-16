@@ -1,6 +1,5 @@
 import express, { Express, Request, Response } from "express";
 import { startUdpServer } from "./apn-server";
-import { initDb, initMongoose } from "./utils/db";
 
 async function healthMethod(req: Request, res: Response) {
     res.send("OK3");
@@ -19,4 +18,4 @@ webserver.listen(8080, () => {
 });
 
 startUdpServer();
-console.log("udpsrv started, v1.11, at", new Date());
+console.log("udpsrv started, v1.12, at", new Date());

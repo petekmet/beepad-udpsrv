@@ -1,5 +1,5 @@
 import { Device } from "../model/device";
-import { Connection, createConnection } from "ts-datastore-orm";
+import { Connection } from "ts-datastore-orm";
 import { Measurement } from "../model/measurement.entity";
 import { Year } from "../model/year.entity";
 import { Month } from "../model/month.entity";
@@ -8,7 +8,7 @@ import { UplinkPacket } from "../utils/structbuffer";
 import { ExtSensor } from "../model/ext-sensor.entity";
 import { DateTime, Interval } from "luxon";
 
-export async function saveMeasurementForDevice(connection: Connection, device: Device, measurement: Measurement) {
+export async function saveMeasurementForDevice(connection: Connection, device: Device, measurement: Measurement, downlinRequested: boolean) {
     const dateOfMeasurement = measurement.timestamp;
     const timeZone = device.timeZone ? device.timeZone : "Europe/Prague"; // default device timezone
     const zonedDateTime = DateTime.fromSeconds(dateOfMeasurement.getTime() / 1000).setZone(timeZone);
@@ -52,11 +52,13 @@ export async function saveMeasurementForDevice(connection: Connection, device: D
     measurement._ancestorKey = d.getKey();
     measurement = await measurementRepo.insert(measurement);
     device.lastMeasurement = measurement;
-    device.downlinkData = "";
+    if(downlinRequested){
+        device.downlinkData = "";
+    }
 
     // update device
-    const repostory = connection.getRepository(Device);
-    await repostory.update(device);
+    const deviceRepostory = connection.getRepository(Device);
+    await deviceRepostory.update(device);
     console.log("Measurement", measurement._id, "stored, device", device._id, "updated");
 }
 
