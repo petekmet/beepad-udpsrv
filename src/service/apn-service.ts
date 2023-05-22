@@ -46,10 +46,10 @@ export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo
             const packetPayload = msg.subarray(17); // skip header at pos 17
             return processUplinkData(connection, d, packetHeader, packetPayload, downlinkData);
         } else {
-            console.log("WARNING: Cmac verification failed");
+            console.log("WARNING: Device CMAC failure", nbiotComposedAddress);
         }
     } else {
-        console.log("WARNING: unknown address", nbiotComposedAddress);
+        console.log("WARNING: Device unknown", nbiotComposedAddress);
     }
 }
 
