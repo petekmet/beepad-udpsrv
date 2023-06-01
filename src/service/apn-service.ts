@@ -66,7 +66,7 @@ function processUplinkData(
             console.log("Decoded uplink packet type 0\n", packet);
             const measurement = createMeasurementFromPacket(packet, device);
             if (device.lastMeasurement && device.lastMeasurement.cnt == measurement.cnt) {
-                console.log("WARNING: duplicate last cnt, no save")
+                console.log("WARNING: Device", device.address, "duplicate last cnt, no save")
             } else {
                 processEmailAlerts(connection, device, measurement);
                 saveMeasurementForDevice(connection, device, measurement, packet.flags.downlinkRequest);

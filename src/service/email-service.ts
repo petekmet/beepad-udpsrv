@@ -33,6 +33,7 @@ export function processEmailAlerts(connection: Connection, device: Device, measu
         const deltaWeight = measurement.weight - device.lastMeasurement.weight;
         if (Math.abs(deltaWeight) > 1) {
             measurement.alarm = true;
+            console.log("Device", device.address, "rise alarm: previous", device.lastMeasurement.weight, "now", measurement.weight, "delta", deltaWeight);
             // send alarm email
             sendWeightAlertEmail(connection, device, deltaWeight);
         }
