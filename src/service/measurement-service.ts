@@ -95,7 +95,10 @@ export function createDateOfMeasurement(timestamp: Date, timestampNow: Date): Da
     const delta = Interval.fromDateTimes(DateTime.fromJSDate(timestamp), DateTime.fromJSDate(timestampNow));
     const spread = delta.toDuration('days').days;
     if (spread >= 1) { 
-        console.log("WARNING: Fixing asOf to now. Rxcess clock skew in days:", spread); 
+        console.log("WARNING: Fixing asOf to now. Excess clock lag in days:", spread); 
+    }else
+    if(spread <= -1) {
+        console.log("WARNING: Excess clock forward in days:", spread);
     }
     return spread >= 1 ? timestampNow : timestamp;
 }
