@@ -92,13 +92,15 @@ export function createMeasurementFromPacket(packet: UplinkPacket, device: Device
 }
 
 export function createDateOfMeasurement(timestamp: Date, timestampNow: Date): Date {
-    const delta = Interval.fromDateTimes(DateTime.fromJSDate(timestamp), DateTime.fromJSDate(timestampNow));
-    const spread = delta.toDuration('days').days;
-    if (spread >= 1) { 
-        console.log("WARNING: Fixing asOf to now. Excess clock lag in days:", spread); 
+    const delta = DateTime.fromJSDate(timestampNow).diff(DateTime.fromJSDate(timestamp)).milliseconds;
+    
+    if (delta >= 86400000) { 
+        console.log("WARNING: Excess clock lag, fixing asOf to now");
+        return timestampNow;
     }else
-    if(delta.toDuration('hours').hours < -1) {
-        console.log("WARNING: Excess clock forward in days:", spread);
-    }
-    return spread >= 1 ? timestampNow : timestamp;
+    if(delta < -3600000) {
+        console.log("WARNING: Excess clock forward by sec", Math.abs(delta/1000));
+        return timestampNow;
+    }else
+        return timestamp;
 }

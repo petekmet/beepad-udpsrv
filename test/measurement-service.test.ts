@@ -1,7 +1,7 @@
 import { createMeasurementFromPacket, createDateOfMeasurement } from "../src/service/measurement-service";
 import { uplinkPacket } from "../src/utils/structbuffer";
 import { sbytes as b } from "struct-buffer";
-import { DateTime, Duration } from "luxon";
+import { DateTime, Duration, Interval } from "luxon";
 import nodemailer from "nodemailer";
 import { SendEmailCommand, SendEmailCommandInput, SESv2Client, SESv2ClientConfig } from "@aws-sdk/client-sesv2";
 import { env } from "process";
@@ -21,7 +21,7 @@ function kvak(a: number): number {
     return a;
 }
 
-describe("message utils tests", () => {
+describe("other tests", () => {
     const rawHexaString = "163b858bcf130300816dbddfd2330300001478b899627b003ce3039d0000000000000000e4100100000000000000000000000018e52d8a78";
     
     test("a is changed", () => {
@@ -74,6 +74,14 @@ describe("message utils tests", () => {
         const d1 = DateTime.fromJSDate(now).minus(Duration.fromObject({hours:12}));
         const result = createDateOfMeasurement(d1.toJSDate(), now);
         expect(result.getTime()).toBe(d1.toJSDate().getTime());
+    });
+
+    test("when forward shifted", () => {
+        // given
+        const now = new Date();
+        const d1 = DateTime.fromJSDate(now).plus(Duration.fromObject({minutes:61}));
+        const result = createDateOfMeasurement(d1.toJSDate(), now);
+        expect(result.getTime()).toBe(now.getTime());
     });
 
     test.skip("nodemailer", async () => {
