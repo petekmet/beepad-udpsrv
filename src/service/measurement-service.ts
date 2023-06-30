@@ -65,7 +65,7 @@ export async function saveMeasurementForDevice(connection: Connection, device: D
 export function createMeasurementFromPacket(packet: UplinkPacket, device: Device): Measurement {
     const asOf = new Date(packet.measurementTimestamp * 1000);
     // if class < 3 -> check delta (dateOf, dateOn) > 8 hours -> use dateOf = dateOn else dateOf = dateOf
-    const dateOfMeasurement = device.deviceClass > 2 ? asOf : createDateOfMeasurement(asOf, new Date());
+    const dateOfMeasurement = createDateOfMeasurement(asOf, new Date());
     const measurement = new Measurement();
     measurement.asOn = new Date();
     measurement.timestamp = dateOfMeasurement;
