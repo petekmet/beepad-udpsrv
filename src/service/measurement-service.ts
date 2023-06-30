@@ -93,7 +93,7 @@ export function createMeasurementFromPacket(packet: UplinkPacket, device: Device
 
 export function createDateOfMeasurement(timestamp: Date, timestampNow: Date): Date {
     const delta = DateTime.fromJSDate(timestampNow).diff(DateTime.fromJSDate(timestamp)).milliseconds;
-    
+    console.log("Delta clock server-device", delta);
     if (delta >= 86400000) { 
         console.log("WARNING: Excess clock lag, fixing asOf to now");
         return timestampNow;
