@@ -2,22 +2,24 @@ import { Socket } from "node:dgram";
 import dgram from "dgram";
 import { AddressInfo } from "net";
 import { apnServiceGetResponseBuffer } from "./service/apn-service";
+import logger from "./utils/logger";
+import { env } from "node:process";
 
 const server: Socket = dgram.createSocket("udp4");
-const key = Buffer.from("CB4E3EA400309DAB656D8DBFE4B93F35", "hex");
 
 export function startUdpServer(){
     // emits on new datagram msg
     server.on('message', async function (msg: Buffer, info: AddressInfo) {
-        console.log("\nInbound message on %s", new Date());
-        console.log("Received %d bytes from %s:%d", msg.length, info.address, info.port);
-        console.log("Data:", msg.toString("hex"));
+        let labels = {labelse:{device: info.address}};
+        logger.info("\nInbound message on %s", labels);
+        logger.info("Received %d bytes from %s:%d", msg.length, info.address, info.port, labels);
+        logger.info("Data %s", msg.toString("hex"), labels);
         const responseBuffer = await apnServiceGetResponseBuffer(msg, info);
         if(responseBuffer){
             server.send(responseBuffer, info.port, info.address);
-            console.log("Sent out response messages %s\n", responseBuffer.toString("hex"));
+            logger.info("Sent out response messages %s", responseBuffer.toString("hex"), labels);
         }else{
-            console.log("No data sent out");
+            logger.info("No data sent out", labels);
         }
     });
 
@@ -27,14 +29,15 @@ export function startUdpServer(){
         var port = address.port;
         var family = address.family;
         var ipaddr = address.address;
-        console.log('Server is listening at port ' + port);
-        console.log('Server ip :' + ipaddr);
-        console.log('Server is IP4/IP6 : ' + family);
+        var labels = {labels:{hostname: env.HOSTNAME}};
+        logger.info({message:'udpsrv, listening at port '+ port, labels:{hostname: env.HOSTNAME}});
+        logger.info('Server ip: %s', ipaddr);
+        logger.info('Server is IP4/IP6: %s', family);
     });
 
     //emits after the socket is closed using socket.close();
     server.on('close', function () {
-        console.log('Socket is closed');
+        logger.debug('Socket is closed');
     });
 
     server.bind(2222);

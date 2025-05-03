@@ -5,3 +5,4 @@ test-env.ps1
 test-env.sh
 id_rsa-github
 id_rsa-github.pub
+.vscode/launch.json

@@ -7,6 +7,7 @@ import { createDownlinkMessage, messageWithMac } from "../utils/message-utils";
 import { uplinkPacket, UplinkPacketHeader, uplinkPacketHeader } from "../utils/structbuffer";
 import { processEmailAlerts } from "./email-service";
 import { createMeasurementFromPacket, saveMeasurementForDevice } from "./measurement-service";
+import logger from "../utils/logger";
 
 // emits on new datagram msg
 export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo): Promise<Buffer | undefined> {
@@ -19,7 +20,7 @@ export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo
     // const packet = uplinkPacket.decode(msg, true);
     const packetHeader: UplinkPacketHeader = uplinkPacketHeader.decode(msg, true);
     const nbiotComposedAddress: string = msg.subarray(0, 16).toString("hex");
-    console.log("NB-IoT device composed address:", nbiotComposedAddress);
+    logger.info("NB-IoT device composed address: %s", nbiotComposedAddress);
     // console.log("Decoded packet header:", packetHeader);
 
     // get device properties
@@ -28,7 +29,11 @@ export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo
     const d = await repostory.query().filter("address", nbiotComposedAddress).findOne();
 
     if (d) {
-        console.log(new Date(), "Device:", d._id, d.address, d.name);
+        let labels = {labels:{"device": d.address, "deviceName": d.name}};
+        logger.info(
+            "Device: %s %s %s", d._id, d.address, d.name,
+            labels
+            );
         // verify cmac
         const key = Buffer.from(d!.nwkSKey, "hex");
         const cmac = msg.subarray(msg.length - 4);
@@ -38,18 +43,18 @@ export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo
         const calculatedCmacNumber: number = result.subarray(0, 4).readInt32LE();
         if (calculatedCmacNumber == cmacNumber || d.deviceClass == 4) {
             if (d.deviceClass == 4) {
-                console.log("WARNING: Cmac check skipped, device class 4");
+                logger.warn("WARNING: Cmac check skipped, device class 4", labels);
             } else {
-                console.log("Cmac ok");
+                logger.info("Cmac ok", labels);
             }
             const downlinkData = d?.downlinkData ? Buffer.from(d.downlinkData, "hex") : undefined;
             const packetPayload = msg.subarray(17); // skip header at pos 17
             return processUplinkData(connection, d, packetHeader, packetPayload, downlinkData);
         } else {
-            console.log("WARNING: Device CMAC failure", nbiotComposedAddress);
+            logger.warn("WARNING: Device CMAC failure %s", nbiotComposedAddress, labels);
         }
     } else {
-        console.log("WARNING: Device unknown", nbiotComposedAddress);
+        logger.warn("WARNING: Device unknown %s", nbiotComposedAddress, {labels:{"device": nbiotComposedAddress}});
     }
 }
 
@@ -61,12 +66,13 @@ function processUplinkData(
     downlinkData?: Buffer
 ): Buffer | undefined {
     if (packetHeader.packetType === 0) {
+        let labels = {labels:{"device": device.address, "deviceName": device.name}};
         try {
             const packet = uplinkPacket.decode(new Uint8Array(packetPayload), true);
-            console.log("Decoded uplink packet type 0\n", packet);
+           logger.info("Decoded uplink packet type 0 ${packet}", labels);
             const measurement = createMeasurementFromPacket(packet, device);
             if (device.lastMeasurement && device.lastMeasurement.cnt == measurement.cnt) {
-                console.log("WARNING: Device", device.address, "duplicate last cnt, no save")
+                logger.warn("WARNING: Device duplicate last cnt, no save", labels);
             } else {
                 processEmailAlerts(connection, device, measurement);
                 saveMeasurementForDevice(connection, device, measurement, packet.flags.downlinkRequest);
@@ -75,10 +81,10 @@ function processUplinkData(
                     const key = Buffer.from(device.nwkSKey, "hex");
                     return messageWithMac(createDownlinkMessage(packetHeader, downlinkData), key);
                 }
-                console.log("Measurement on", new Date(packet.measurementTimestamp * 1000), "saved on", measurement.asOn);
+                logger.info("Measurement on ${new Date(packet.measurementTimestamp * 1000)} saved on ${measurement.asOn}", labels);
             }
         } catch {
-            console.log(new Date(), "WARNING: could not decode packet");
+            logger.warn("WARNING: could not decode packet", labels);
         }
     }
 }
