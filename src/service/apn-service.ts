@@ -69,7 +69,7 @@ function processUplinkData(
         let labels = {labels:{"device": device.address, "deviceName": device.name}};
         try {
             const packet = uplinkPacket.decode(new Uint8Array(packetPayload), true);
-           logger.info("Decoded uplink packet type 0 ${packet}", labels);
+           logger.info("Decoded uplink packet type 0 %s", packet, labels);
             const measurement = createMeasurementFromPacket(packet, device);
             if (device.lastMeasurement && device.lastMeasurement.cnt == measurement.cnt) {
                 logger.warn("WARNING: Device duplicate last cnt, no save", labels);
@@ -81,7 +81,7 @@ function processUplinkData(
                     const key = Buffer.from(device.nwkSKey, "hex");
                     return messageWithMac(createDownlinkMessage(packetHeader, downlinkData), key);
                 }
-                logger.info("Measurement on ${new Date(packet.measurementTimestamp * 1000)} saved on ${measurement.asOn}", labels);
+                logger.info("Measurement on %s saved on %s", new Date(packet.measurementTimestamp * 1000), measurement.asOn, labels);
             }
         } catch {
             logger.warn("WARNING: could not decode packet", labels);
