@@ -11,7 +11,7 @@ export function startUdpServer(){
     // emits on new datagram msg
     server.on('message', async function (msg: Buffer, info: AddressInfo) {
         let labels = {labelse:{device: info.address}};
-        logger.info("\nInbound message on %s", labels);
+        logger.info("Inbound message", labels);
         logger.info("Received %d bytes from %s:%d", msg.length, info.address, info.port, labels);
         logger.info("Data %s", msg.toString("hex"), labels);
         const responseBuffer = await apnServiceGetResponseBuffer(msg, info);
