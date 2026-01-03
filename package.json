@@ -9,34 +9,38 @@
   },
   "dependencies": {
     "@aws-sdk/client-sesv2": "^3.112.0",
-    "@google-cloud/datastore": "^6.6.2",
+    "@google-cloud/datastore": "^10.0.1",
     "@types/express": "^4.17.13",
     "@types/luxon": "^2.3.2",
     "@types/nodemailer": "^6.4.4",
     "aes-cmac": "^1.0.3",
     "express": "^4.18.1",
     "luxon": "^2.4.0",
-    "nodemailer": "^6.7.5",
+    "nodemailer": "^7.0.12",
     "struct-buffer": "^5.2.0",
-    "ts-datastore-orm": "^2.0.7",
-    "ts-jest": "^28.0.2",
+    "ts-datastore-orm": "^2.0.9",
     "uuid": "^8.3.2",
     "winston": "^3.17.0",
     "winston-loki": "^6.1.3"
   },
+  "overrides": {
+    "protobufjs": "^7.4.0"
+  },
   "devDependencies": {
-    "@types/jest": "^27.5.0",
-    "@types/node": "^16.11.6",
-    "@typescript-eslint/parser": "^5.3.1",
-    "axios": "^0.23.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.0.3",
+    "@typescript-eslint/parser": "^8.51.0",
+    "axios": "^1.13.2",
     "concurrently": "^7.0.0",
-    "eslint": "^8.2.0",
-    "jest": "^28.1.0",
-    "mocha": "^9.1.3",
-    "nodemon": "^2.0.15",
+    "eslint": "^9.39.2",
+    "jest": "^30.2.0",
+    "mocha": "^11.7.5",
+    "nodemon": "^3.1.11",
     "prettier": "^2.4.1",
-    "sinon": "^11.1.2",
+    "sinon": "^21.0.1",
+    "ts-jest": "^29.4.6",
     "ts-node": "^10.4.0",
-    "typescript": "^4.5.5"
+    "typescript": "^5.9.3",
+    "undici-types": "^7.16.0"
   }
 }
