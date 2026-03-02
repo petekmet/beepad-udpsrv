@@ -19,10 +19,10 @@ import { Tare } from "./tare.entity";
 */
 @Entity()
 export class Device extends BaseEntity {
-    @Field({generateId: true})
+    @Field({ generateId: true })
     public _id: number = 0;
 
-    @Field({index: true})
+    @Field({ index: true })
     public address: string;
 
     @Field()
@@ -33,7 +33,7 @@ export class Device extends BaseEntity {
 
     @Field()
     public openHour: number;
-    
+
     @Field()
     public closeHour: number;
 
@@ -79,7 +79,7 @@ export class Device extends BaseEntity {
     @Field()
     public nwkSKey: string;
 
-    @Field()
+    @Field({ index: true })
     public lastMeasurement: Measurement;
 
     // new fields specific for NB-IoT device
