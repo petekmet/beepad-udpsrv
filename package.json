@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-sesv2": "^3.112.0",
-    "@google-cloud/datastore": "^10.0.1",
+    "@google-cloud/datastore": "^10.1.0",
     "@types/express": "^4.17.13",
     "@types/luxon": "^2.3.2",
     "@types/nodemailer": "^6.4.4",
@@ -25,7 +25,8 @@
   },
   "overrides": {
     "protobufjs": "^7.4.0",
-    "minimatch": "10.2.1"
+    "minimatch": "10.2.1",
+    "test-exclude": "^7.0.1"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
