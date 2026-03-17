@@ -2,7 +2,7 @@ FROM node as builder
 RUN uname -a && mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
 WORKDIR /home/node/app
 COPY package*.json ./
-RUN npm install
+RUN npm install -g npm@latest && npm install
 COPY --chown=node:node tsconfig.json ./
 COPY --chown=node:node src ./src
 USER node
@@ -12,7 +12,7 @@ FROM node:slim
 RUN uname -a && mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
 WORKDIR /home/node/app
 COPY package*.json ./
-RUN npm install --omit=dev
+RUN npm install -g npm@latest && npm install --omit=dev
 USER node
 COPY --from=builder /home/node/app/dist ./dist
 EXPOSE 2222/udp
