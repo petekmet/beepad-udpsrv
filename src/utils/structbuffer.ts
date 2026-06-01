@@ -28,6 +28,7 @@ interface UplinkFlags {
     shutdown: boolean,
     downlinkRequest: boolean,
     lastDownlinkSuccess: boolean,
+    weatherSensorFault: boolean,
     reserved: number
 }
 
@@ -78,7 +79,8 @@ export const uplinkFlags = bitFields(uint8_t, {
     shutdown: 1,
     downlinkRequest: 1,
     lastDownlinkSuccess: 1,
-    reserved: 3
+    weatherSensorFault: 1, // BME280 unreadable; temperature/humidity/pressure are 0
+    reserved: 2
 });
 
 export const uplinkPacket = new StructBuffer<UplinkPacket>("uplink", {

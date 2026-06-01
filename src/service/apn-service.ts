@@ -70,6 +70,9 @@ function processUplinkData(
         try {
             const packet = uplinkPacket.decode(new Uint8Array(packetPayload), true);
            logger.info("Decoded uplink packet type 0 %s", packet, labels);
+            if (packet.flags.weatherSensorFault) {
+                logger.warn("WARNING: BME280 weather sensor fault reported; temperature/humidity/pressure are invalid (0)", labels);
+            }
             const measurement = createMeasurementFromPacket(packet, device);
             if (device.lastMeasurement && device.lastMeasurement.cnt == measurement.cnt) {
                 logger.warn("WARNING: Device duplicate last cnt, no save", labels);
