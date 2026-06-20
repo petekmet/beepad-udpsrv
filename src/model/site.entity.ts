@@ -9,4 +9,8 @@ export class Site extends BaseEntity{
     public name: string;
     @Field()
     public devices: Key[];
+    // Defensive mapping (this app reads but does not write Site today): kept so any future
+    // save preserves coordinates written by beepad-admin-api / bpng.
+    @Field()
+    public geoLocation: { latitude: number; longitude: number };
 }
