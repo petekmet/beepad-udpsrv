@@ -75,7 +75,10 @@ export function createMeasurementFromPacket(packet: UplinkPacket, device: Device
     measurement.pressure = packet.pressure;
     measurement.battery = packet.batterySoc.batteryLevel;
     measurement.batteryStatus = packet.batterySoc.status;
-    measurement.alarm = packet.flags.alert == true ? true : false;
+    // Old firmware can set packet.flags.alert spuriously (false alarm), so we do
+    // NOT trust it. The weight-alarm flag is determined solely by our own
+    // |Δweight| > threshold check in processEmailAlerts (email-service.ts).
+    measurement.alarm = false;
     measurement.cnt = packet.sequenceId;
     measurement.downlinkReq = packet.flags.downlinkRequest == true ? true : false;
     if (packet.extSensor.sensorFlags.sensorFound) {

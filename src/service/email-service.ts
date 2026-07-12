@@ -1,91 +1,89 @@
-import { AccountDetails, SendEmailCommand, SendEmailCommandInput, SESv2Client, SESv2ClientConfig } from "@aws-sdk/client-sesv2";
-import { Connection, createConnection } from "ts-datastore-orm";
+import axios from "axios";
+import { Connection } from "ts-datastore-orm";
 import { env } from "process";
 import { Device } from "../model/device";
 import { Measurement } from "../model/measurement.entity";
-import { Site } from "../model/site.entity";
-import { Account } from "../model/account.entity";
-import { LogEmail } from "../model/log-email.entity";
+import { Settings } from "../model/settings.entity";
+import logger from "../utils/logger";
 
-const sesV2Config: SESv2ClientConfig = {
-    credentials: {
-        secretAccessKey: env.AWS_SES_ACCESS_SECRET!,
-        accessKeyId: env.AWS_SES_ACCESS_KEY_ID!
-    },
-    region: "eu-west-1",
-};
+/**
+ * Evaluate battery-hysteresis and weight-alarm rules for a freshly received
+ * measurement. Thresholds + toggles come from the shared "global" Settings
+ * entity (configured in beepad-admin-ui). Mutates `device.batteryLow` /
+ * `measurement.alarm` (persisted by the caller) and — only on a transition/alarm
+ * — calls the typed beepad-admin-api notification endpoint with raw values;
+ * admin-api owns template selection, currency and formatting.
+ *
+ * Must be awaited before the device/measurement are persisted so the flag
+ * mutations are saved.
+ */
+// Per-process TTL cache of the single "global" Settings entity, to avoid a
+// Datastore read on every measurement. Config changes propagate within the TTL.
+const SETTINGS_CACHE_TTL_MS = Number(env.SETTINGS_CACHE_TTL_MS ?? 300000);
+let cachedSettings: Settings | undefined;
+let cachedSettingsAt = 0;
 
-export function processEmailAlerts(connection: Connection, device: Device, measurement: Measurement) {
-    // check battery state
-    if (measurement.battery > 3700 && device.batteryLow == true) {
-        device.batteryLow = false;
-        // send battery back to normal email
-        console.log("Battery back to normal");
-    } else
-        if (measurement.battery < 3400 && device.batteryLow == false) {
+async function getCachedSettings(connection: Connection): Promise<Settings | undefined> {
+    const now = Date.now();
+    if (now - cachedSettingsAt < SETTINGS_CACHE_TTL_MS) {
+        return cachedSettings;
+    }
+    cachedSettings = await connection.getRepository(Settings).findOne("global");
+    cachedSettingsAt = now;
+    return cachedSettings;
+}
+
+export async function processEmailAlerts(connection: Connection, device: Device, measurement: Measurement) {
+    const settings = await getCachedSettings(connection);
+
+    // battery state (hysteresis) — entirely gated by the enable toggle. Ignore a
+    // 0 reading (means "no battery data").
+    if (settings?.batteryNotificationEnabled && measurement.battery > 0) {
+        if (measurement.battery > settings.batteryRestoreThresholdMv && device.batteryLow == true) {
+            device.batteryLow = false;
+            logger.info("Battery back to normal on device %s", device.address);
+            postNotify("/internal/notify/battery", { deviceId: device._id, state: "OK", batteryMv: measurement.battery, weight: measurement.weight });
+        } else if (measurement.battery < settings.batteryLowThresholdMv && device.batteryLow == false) {
             device.batteryLow = true;
-            // send battery low email
-            console.log("Battery low");
+            logger.info("Battery low on device %s", device.address);
+            postNotify("/internal/notify/battery", { deviceId: device._id, state: "LOW", batteryMv: measurement.battery, weight: measurement.weight });
         }
+    }
 
-    // check weight state
+    // weight state (jump between consecutive measurements). The alarm flag always
+    // tracks the configured threshold (default 1.0 kg); the email is gated by the
+    // enable toggle.
     if (device.lastMeasurement) {
+        const threshold = settings?.weightAlarmThresholdKg ?? 1;
         const deltaWeight = measurement.weight - device.lastMeasurement.weight;
-        if (Math.abs(deltaWeight) > 1) {
+        if (Math.abs(deltaWeight) > threshold) {
             measurement.alarm = true;
-            console.log("Device", device.address, "rise alarm: previous", device.lastMeasurement.weight, "now", measurement.weight, "delta", deltaWeight);
-            // send alarm email
-            sendWeightAlertEmail(connection, device, deltaWeight);
+            logger.info(
+                "Device %s weight alarm: previous %s now %s delta %s",
+                device.address, device.lastMeasurement.weight, measurement.weight, deltaWeight,
+            );
+            if (settings?.weightAlarmEnabled) {
+                postNotify("/internal/notify/weight-alarm", { deviceId: device._id, deltaWeight });
+            }
         }
     }
 }
 
-async function getAccountBySite(connection: Connection, s: Site): Promise<Account | undefined> {
-    return await connection.getRepository(Account).findOne(s!._ancestorKey!);
-}
-
-async function getEmailAddressByDevice(connection: Connection, device: Device): Promise<string[]> {
-    // get sites with device
-    const siteList = await connection.getRepository(Site).query().filter("devices", x => x.eq(device!.getKey())).findMany();
-    // get accounts/emails with sites
-    const accList = await Promise.all(siteList.map( async(site) => await getAccountBySite(connection, site)));
-    return accList.map(account => account?.email ?? []).flat(1);
-}
-
-async function sendWeightAlertEmail(connection: Connection, device: Device, weightDelta: number) {
-    const destination = await getEmailAddressByDevice(connection, device);
-    console.log("Emails to be notified:", destination);
-    if(destination.length > 0) {
-        const client = new SESv2Client(sesV2Config);
-        const templateData = {
-            devicename: device.name,
-            deviceid: device._id,
-            weight: weightDelta.toFixed(1)
-        };
-        const templateDataJson = JSON.stringify(templateData);
-        const params: SendEmailCommandInput = {
-            Content: {
-                Template: {
-                    TemplateName: "SK_WeightAlertTemplate",
-                    TemplateData: templateDataJson
-                }
-            },
-            Destination: {
-                ToAddresses: destination // ["peter.kmet@t16.biz"]
-            },
-            FromEmailAddress: "BeePad <info@mybeepad.com>",
-        }
-        const command = new SendEmailCommand(params);
-        const sendPromise = client.send(command);
-
-        // log email sending to db
-        const logEntity = new LogEmail();
-        logEntity._ancestorKey = device.getKey();
-        logEntity.destination = destination;
-        logEntity.timestamp = new Date();
-        logEntity.templateId = params.Content?.Template?.TemplateName!;
-        logEntity.content = templateDataJson;
-        const logInsertPromise = connection.getRepository(LogEmail).insert(logEntity);
-        await Promise.all([sendPromise, logInsertPromise]);
+/**
+ * Fire-and-forget call to a typed admin-api notification endpoint. admin-api
+ * resolves the owner's address + billing currency, picks the template and sends.
+ */
+async function postNotify(path: string, body: Record<string, unknown>) {
+    const url = env.ADMIN_API_INTERNAL_URL;
+    const token = env.INTERNAL_API_TOKEN;
+    if (!url || !token) {
+        logger.warn("ADMIN_API_INTERNAL_URL / INTERNAL_API_TOKEN not configured; skipping notification for device %s", body.deviceId);
+        return;
+    }
+    try {
+        await axios.post(`${url}${path}`, body, { headers: { "X-Internal-Token": token }, timeout: 5000 });
+        logger.info("Requested notification %s for device %s", path, body.deviceId);
+    } catch (e) {
+        logger.error("Failed calling notification endpoint %s for device %s: %s", path, body.deviceId, e);
     }
 }

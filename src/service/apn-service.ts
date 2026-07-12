@@ -58,13 +58,13 @@ export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo
     }
 }
 
-function processUplinkData(
+async function processUplinkData(
     connection: Connection,
     device: Device,
     packetHeader: UplinkPacketHeader,
     packetPayload: Buffer,
     downlinkData?: Buffer
-): Buffer | undefined {
+): Promise<Buffer | undefined> {
     if (packetHeader.packetType === 0) {
         let labels = {labels:{"device": device.address, "deviceName": device.name}};
         try {
@@ -77,7 +77,7 @@ function processUplinkData(
             if (device.lastMeasurement && device.lastMeasurement.cnt == measurement.cnt) {
                 logger.warn("WARNING: Device duplicate last cnt, no save", labels);
             } else {
-                processEmailAlerts(connection, device, measurement);
+                await processEmailAlerts(connection, device, measurement);
                 saveMeasurementForDevice(connection, device, measurement, packet.flags.downlinkRequest);
 
                 if (packet.flags.downlinkRequest && downlinkData) {
