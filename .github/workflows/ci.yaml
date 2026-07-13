@@ -44,11 +44,11 @@ jobs:
     steps:
     # Checkout the repo
     - name: Checkout repository
-      uses: actions/checkout@master
+      uses: actions/checkout@v4
 
     # Login to Container registry
     - name: Log in to the Container registry
-      uses: docker/login-action@v1
+      uses: docker/login-action@v3
       with:
         registry: ${{ env.CONTAINER_REGISTRY }}
         username: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
