@@ -61,13 +61,23 @@ jobs:
     - name: print branch
       run: echo ${{ needs.CI-build-set-versions.outputs.branch }}
 
-    - name: Set up QEMU        
-      uses: docker/setup-qemu-action@v1
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
 
-    - name: Set up Docker Buildx        
-      uses: docker/setup-buildx-action@v1
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
-    - run: |
+    - name: Build and push image
+      run: |
         docker buildx build --platform linux/amd64,linux/arm64 -t ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.version }} --file ./Dockerfile --output type=image,push=true .
         docker buildx build --platform linux/amd64,linux/arm64 -t ${{ env.CONTAINER_REGISTRY }}/${{env.REPO_NAME}}/${{ env.APP_NAME }}:latest --file ./Dockerfile --output type=image,push=true .
-        
+
+    - name: Publish tag summary
+      run: |
+        {
+          echo "### Published Docker tags"
+          echo ""
+          echo "- \`${{ env.CONTAINER_REGISTRY }}/${{ env.REPO_NAME }}/${{ env.APP_NAME }}:${{ needs.CI-build-set-versions.outputs.version }}\`"
+          echo "- \`${{ env.CONTAINER_REGISTRY }}/${{ env.REPO_NAME }}/${{ env.APP_NAME }}:latest\`"
+        } >> "$GITHUB_STEP_SUMMARY"
+
