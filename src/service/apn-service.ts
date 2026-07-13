@@ -7,10 +7,10 @@ import { createDownlinkMessage, messageWithMac } from "../utils/message-utils";
 import { uplinkPacket, UplinkPacketHeader, uplinkPacketHeader } from "../utils/structbuffer";
 import { processEmailAlerts } from "./email-service";
 import { createMeasurementFromPacket, saveMeasurementForDevice } from "./measurement-service";
-import logger from "../utils/logger";
+import logger, { evt } from "../utils/logger";
 
 // emits on new datagram msg
-export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo): Promise<Buffer | undefined> {
+export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo, trace: string): Promise<Buffer | undefined> {
     // verify cmac
     // extract device address
     // extract packet type
@@ -20,7 +20,7 @@ export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo
     // const packet = uplinkPacket.decode(msg, true);
     const packetHeader: UplinkPacketHeader = uplinkPacketHeader.decode(msg, true);
     const nbiotComposedAddress: string = msg.subarray(0, 16).toString("hex");
-    logger.info("NB-IoT device composed address: %s", nbiotComposedAddress);
+    logger.info("NB-IoT device composed address: %s", nbiotComposedAddress, evt("uplink", { trace, device: nbiotComposedAddress }));
     // console.log("Decoded packet header:", packetHeader);
 
     // get device properties
@@ -29,11 +29,8 @@ export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo
     const d = await repostory.query().filter("address", nbiotComposedAddress).findOne();
 
     if (d) {
-        let labels = {labels:{"device": d.address, "deviceName": d.name}};
-        logger.info(
-            "Device: %s %s %s", d._id, d.address, d.name,
-            labels
-            );
+        const ctx = { trace, device: d.address, deviceName: d.name, deviceId: d._id };
+        logger.info("Device: %s %s %s", d._id, d.address, d.name, evt("uplink", ctx));
         // verify cmac
         const key = Buffer.from(d!.nwkSKey, "hex");
         const cmac = msg.subarray(msg.length - 4);
@@ -43,18 +40,18 @@ export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo
         const calculatedCmacNumber: number = result.subarray(0, 4).readInt32LE();
         if (calculatedCmacNumber == cmacNumber || d.deviceClass == 4) {
             if (d.deviceClass == 4) {
-                logger.warn("WARNING: Cmac check skipped, device class 4", labels);
+                logger.warn("WARNING: Cmac check skipped, device class 4", evt("cmac", ctx));
             } else {
-                logger.info("Cmac ok", labels);
+                logger.info("Cmac ok", evt("cmac", ctx));
             }
             const downlinkData = d?.downlinkData ? Buffer.from(d.downlinkData, "hex") : undefined;
             const packetPayload = msg.subarray(17); // skip header at pos 17
-            return processUplinkData(connection, d, packetHeader, packetPayload, downlinkData);
+            return processUplinkData(connection, d, packetHeader, packetPayload, trace, downlinkData);
         } else {
-            logger.warn("WARNING: Device CMAC failure %s", nbiotComposedAddress, labels);
+            logger.warn("WARNING: Device CMAC failure %s", nbiotComposedAddress, evt("cmac", ctx));
         }
     } else {
-        logger.warn("WARNING: Device unknown %s", nbiotComposedAddress, {labels:{"device": nbiotComposedAddress}});
+        logger.warn("WARNING: Device unknown %s", nbiotComposedAddress, evt("uplink", { trace, device: nbiotComposedAddress }));
     }
 }
 
@@ -63,31 +60,32 @@ async function processUplinkData(
     device: Device,
     packetHeader: UplinkPacketHeader,
     packetPayload: Buffer,
+    trace: string,
     downlinkData?: Buffer
 ): Promise<Buffer | undefined> {
     if (packetHeader.packetType === 0) {
-        let labels = {labels:{"device": device.address, "deviceName": device.name}};
+        const ctx = { trace, device: device.address, deviceName: device.name, deviceId: device._id };
         try {
             const packet = uplinkPacket.decode(new Uint8Array(packetPayload), true);
-           logger.info("Decoded uplink packet type 0 %s", packet, labels);
+           logger.info("Decoded uplink packet type 0 %s", packet, evt("uplink", ctx));
             if (packet.flags.weatherSensorFault) {
-                logger.warn("WARNING: BME280 weather sensor fault reported; temperature/humidity/pressure are invalid (0)", labels);
+                logger.warn("WARNING: BME280 weather sensor fault reported; temperature/humidity/pressure are invalid (0)", evt("uplink", ctx));
             }
-            const measurement = createMeasurementFromPacket(packet, device);
+            const measurement = createMeasurementFromPacket(packet, device, trace);
             if (device.lastMeasurement && device.lastMeasurement.cnt == measurement.cnt) {
-                logger.warn("WARNING: Device duplicate last cnt, no save", labels);
+                logger.warn("WARNING: Device duplicate last cnt, no save", evt("uplink", ctx));
             } else {
-                await processEmailAlerts(connection, device, measurement);
-                saveMeasurementForDevice(connection, device, measurement, packet.flags.downlinkRequest);
+                await processEmailAlerts(connection, device, measurement, trace);
+                saveMeasurementForDevice(connection, device, measurement, packet.flags.downlinkRequest, trace);
 
                 if (packet.flags.downlinkRequest && downlinkData) {
                     const key = Buffer.from(device.nwkSKey, "hex");
                     return messageWithMac(createDownlinkMessage(packetHeader, downlinkData), key);
                 }
-                logger.info("Measurement on %s saved on %s", new Date(packet.measurementTimestamp * 1000), measurement.asOn, labels);
+                logger.info("Measurement on %s saved on %s", new Date(packet.measurementTimestamp * 1000), measurement.asOn, evt("measurement", ctx));
             }
         } catch {
-            logger.warn("WARNING: could not decode packet", labels);
+            logger.warn("WARNING: could not decode packet", evt("uplink", ctx));
         }
     }
 }

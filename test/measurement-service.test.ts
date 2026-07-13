@@ -42,7 +42,7 @@ describe("other tests", () => {
         // const nowUnixTimestamp = Math.trunc(Date.now() / 1000);
         // then
         console.log("uplinkMessage: ", up);
-        const m = createMeasurementFromPacket(up, new Device());
+        const m = createMeasurementFromPacket(up, new Device(), "test");
         console.log("measurement: ", m);
         expect(m.shutdown).toBe(false);
         expect(m.reset).toBe(false);

@@ -2,7 +2,7 @@ import { Socket } from "node:dgram";
 import dgram from "dgram";
 import { AddressInfo } from "net";
 import { apnServiceGetResponseBuffer } from "./service/apn-service";
-import logger from "./utils/logger";
+import logger, { evt, newTrace } from "./utils/logger";
 import { env } from "node:process";
 
 const server: Socket = dgram.createSocket("udp4");
@@ -10,34 +10,34 @@ const server: Socket = dgram.createSocket("udp4");
 export function startUdpServer(){
     // emits on new datagram msg
     server.on('message', async function (msg: Buffer, info: AddressInfo) {
-        let labels = {labelse:{device: info.address}};
-        logger.info("Inbound message", labels);
-        logger.info("Received %d bytes from %s:%d", msg.length, info.address, info.port, labels);
-        logger.info("Data %s", msg.toString("hex"), labels);
-        const responseBuffer = await apnServiceGetResponseBuffer(msg, info);
+        // One correlation id per datagram, carried through the whole call chain
+        // so every log line for this packet shares `trace`.
+        const trace = newTrace();
+        const ctx = { trace, srcIp: info.address };
+        logger.info("Inbound message", evt("server", ctx));
+        logger.info("Received %d bytes from %s:%d", msg.length, info.address, info.port, evt("server", ctx));
+        logger.info("Data %s", msg.toString("hex"), evt("server", ctx));
+        const responseBuffer = await apnServiceGetResponseBuffer(msg, info, trace);
         if(responseBuffer){
             server.send(responseBuffer, info.port, info.address);
-            logger.info("Sent out response messages %s", responseBuffer.toString("hex"), labels);
+            logger.info("Sent out response messages %s", responseBuffer.toString("hex"), evt("server", ctx));
         }else{
-            logger.info("No data sent out", labels);
+            logger.info("No data sent out", evt("server", ctx));
         }
     });
 
     //emits when socket is ready and listening for datagram msgs
     server.on('listening', function () {
-        var address = server.address();
-        var port = address.port;
-        var family = address.family;
-        var ipaddr = address.address;
-        var labels = {labels:{hostname: env.HOSTNAME}};
-        logger.info({message:'udpsrv, listening at port '+ port, labels:{hostname: env.HOSTNAME}});
-        logger.info('Server ip: %s', ipaddr);
-        logger.info('Server is IP4/IP6: %s', family);
+        const address = server.address();
+        logger.info(
+            "udpsrv listening at %s:%d (%s)", address.address, address.port, address.family,
+            evt("server", { hostname: env.HOSTNAME })
+        );
     });
 
     //emits after the socket is closed using socket.close();
     server.on('close', function () {
-        logger.debug('Socket is closed');
+        logger.debug('Socket is closed', evt("server"));
     });
 
     server.bind(2222);

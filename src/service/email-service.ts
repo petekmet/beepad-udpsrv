@@ -4,7 +4,7 @@ import { env } from "process";
 import { Device } from "../model/device";
 import { Measurement } from "../model/measurement.entity";
 import { Settings } from "../model/settings.entity";
-import logger from "../utils/logger";
+import logger, { evt } from "../utils/logger";
 
 /**
  * Evaluate battery-hysteresis and weight-alarm rules for a freshly received
@@ -33,20 +33,21 @@ async function getCachedSettings(connection: Connection): Promise<Settings | und
     return cachedSettings;
 }
 
-export async function processEmailAlerts(connection: Connection, device: Device, measurement: Measurement) {
+export async function processEmailAlerts(connection: Connection, device: Device, measurement: Measurement, trace: string) {
     const settings = await getCachedSettings(connection);
+    const ctx = { trace, device: device.address, deviceName: device.name, deviceId: device._id };
 
     // battery state (hysteresis) — entirely gated by the enable toggle. Ignore a
     // 0 reading (means "no battery data").
     if (settings?.batteryNotificationEnabled && measurement.battery > 0) {
         if (measurement.battery > settings.batteryRestoreThresholdMv && device.batteryLow == true) {
             device.batteryLow = false;
-            logger.info("Battery back to normal on device %s", device.address);
-            postNotify("/internal/notify/battery", { deviceId: device._id, state: "OK", batteryMv: measurement.battery, weight: measurement.weight });
+            logger.info("Battery back to normal on device %s", device.address, evt("notification", ctx));
+            postNotify("/internal/notify/battery", { deviceId: device._id, state: "OK", batteryMv: measurement.battery, weight: measurement.weight }, ctx);
         } else if (measurement.battery < settings.batteryLowThresholdMv && device.batteryLow == false) {
             device.batteryLow = true;
-            logger.info("Battery low on device %s", device.address);
-            postNotify("/internal/notify/battery", { deviceId: device._id, state: "LOW", batteryMv: measurement.battery, weight: measurement.weight });
+            logger.info("Battery low on device %s", device.address, evt("notification", ctx));
+            postNotify("/internal/notify/battery", { deviceId: device._id, state: "LOW", batteryMv: measurement.battery, weight: measurement.weight }, ctx);
         }
     }
 
@@ -61,9 +62,10 @@ export async function processEmailAlerts(connection: Connection, device: Device,
             logger.info(
                 "Device %s weight alarm: previous %s now %s delta %s",
                 device.address, device.lastMeasurement.weight, measurement.weight, deltaWeight,
+                evt("notification", ctx),
             );
             if (settings?.weightAlarmEnabled) {
-                postNotify("/internal/notify/weight-alarm", { deviceId: device._id, deltaWeight });
+                postNotify("/internal/notify/weight-alarm", { deviceId: device._id, deltaWeight }, ctx);
             }
         }
     }
@@ -73,17 +75,17 @@ export async function processEmailAlerts(connection: Connection, device: Device,
  * Fire-and-forget call to a typed admin-api notification endpoint. admin-api
  * resolves the owner's address + billing currency, picks the template and sends.
  */
-async function postNotify(path: string, body: Record<string, unknown>) {
+async function postNotify(path: string, body: Record<string, unknown>, ctx: { trace: string; device: string; deviceName?: string; deviceId?: number }) {
     const url = env.ADMIN_API_INTERNAL_URL;
     const token = env.INTERNAL_API_TOKEN;
     if (!url || !token) {
-        logger.warn("ADMIN_API_INTERNAL_URL / INTERNAL_API_TOKEN not configured; skipping notification for device %s", body.deviceId);
+        logger.warn("ADMIN_API_INTERNAL_URL / INTERNAL_API_TOKEN not configured; skipping notification for device %s", body.deviceId, evt("notification", { ...ctx, path }));
         return;
     }
     try {
         await axios.post(`${url}${path}`, body, { headers: { "X-Internal-Token": token }, timeout: 5000 });
-        logger.info("Requested notification %s for device %s", path, body.deviceId);
+        logger.info("Requested notification %s for device %s", path, body.deviceId, evt("notification", { ...ctx, path }));
     } catch (e) {
-        logger.error("Failed calling notification endpoint %s for device %s: %s", path, body.deviceId, e);
+        logger.error("Failed calling notification endpoint %s for device %s: %s", path, body.deviceId, e, evt("notification", { ...ctx, path }));
     }
 }

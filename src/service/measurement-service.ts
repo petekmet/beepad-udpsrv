@@ -7,8 +7,10 @@ import { Day } from "../model/day.entity";
 import { UplinkPacket } from "../utils/structbuffer";
 import { ExtSensor } from "../model/ext-sensor.entity";
 import { DateTime, Interval } from "luxon";
+import logger, { evt } from "../utils/logger";
 
-export async function saveMeasurementForDevice(connection: Connection, device: Device, measurement: Measurement, downlinRequested: boolean) {
+export async function saveMeasurementForDevice(connection: Connection, device: Device, measurement: Measurement, downlinRequested: boolean, trace: string) {
+    const ctx = { trace, device: device.address, deviceName: device.name, deviceId: device._id };
     const dateOfMeasurement = measurement.timestamp;
     const timeZone = device.timeZone ? device.timeZone : "Europe/Prague"; // default device timezone
     const zonedDateTime = DateTime.fromSeconds(dateOfMeasurement.getTime() / 1000).setZone(timeZone);
@@ -28,7 +30,7 @@ export async function saveMeasurementForDevice(connection: Connection, device: D
         y.year = year;
         y._ancestorKey = device.getKey();
         y = await yearRepo.insert(y);
-        console.log("Year created", y.getKey());
+        logger.info("Year created %s", y.getKey(), evt("measurement", ctx));
     }
 
     let m = await monthRepo.query().setAncestorKey(y!.getKey()).filter("month", month).findOne();
@@ -37,7 +39,7 @@ export async function saveMeasurementForDevice(connection: Connection, device: D
         m.month = month;
         m._ancestorKey = y.getKey();
         m = await monthRepo.insert(m);
-        console.log("Month created", m.getKey());
+        logger.info("Month created %s", m.getKey(), evt("measurement", ctx));
     }
 
     let d = await dayRepo.query().setAncestorKey(m!.getKey()).filter("day", day).findOne();
@@ -46,7 +48,7 @@ export async function saveMeasurementForDevice(connection: Connection, device: D
         d.day = day;
         d._ancestorKey = m.getKey();
         d = await dayRepo.insert(d);
-        console.log("Day created", d.getKey());
+        logger.info("Day created %s", d.getKey(), evt("measurement", ctx));
     }
 
     measurement._ancestorKey = d.getKey();
@@ -59,13 +61,13 @@ export async function saveMeasurementForDevice(connection: Connection, device: D
     // update device
     const deviceRepostory = connection.getRepository(Device);
     await deviceRepostory.update(device);
-    console.log("Measurement", measurement._id, "stored, device", device._id, "updated");
+    logger.info("Measurement %s stored, device %s updated", measurement._id, device._id, evt("measurement", ctx));
 }
 
-export function createMeasurementFromPacket(packet: UplinkPacket, device: Device): Measurement {
+export function createMeasurementFromPacket(packet: UplinkPacket, device: Device, trace: string): Measurement {
     const asOf = new Date(packet.measurementTimestamp * 1000);
     // if class < 3 -> check delta (dateOf, dateOn) > 8 hours -> use dateOf = dateOn else dateOf = dateOf
-    const dateOfMeasurement = createDateOfMeasurement(asOf, new Date());
+    const dateOfMeasurement = createDateOfMeasurement(asOf, new Date(), { trace, device: device.address, deviceName: device.name, deviceId: device._id });
     const measurement = new Measurement();
     measurement.asOn = new Date();
     measurement.timestamp = dateOfMeasurement;
@@ -94,15 +96,15 @@ export function createMeasurementFromPacket(packet: UplinkPacket, device: Device
     return measurement;
 }
 
-export function createDateOfMeasurement(timestamp: Date, timestampNow: Date): Date {
+export function createDateOfMeasurement(timestamp: Date, timestampNow: Date, ctx: { trace?: string; device?: string; deviceName?: string; deviceId?: number } = {}): Date {
     const delta = DateTime.fromJSDate(timestampNow).diff(DateTime.fromJSDate(timestamp)).milliseconds;
-    console.log("Delta clock server-device", delta);
-    if (delta >= 86400000) { 
-        console.log("WARNING: Excess clock lag, fixing asOf to now");
+    logger.info("Delta clock server-device %d", delta, evt("measurement", ctx));
+    if (delta >= 86400000) {
+        logger.warn("WARNING: Excess clock lag, fixing asOf to now", evt("measurement", ctx));
         return timestampNow;
     }else
     if(delta < -3600000) {
-        console.log("WARNING: Excess clock forward by sec", Math.abs(delta/1000));
+        logger.warn("WARNING: Excess clock forward by sec %d", Math.abs(delta/1000), evt("measurement", ctx));
         return timestampNow;
     }else
         return timestamp;
