@@ -333,6 +333,24 @@ describe("fw job flow", () => {
         expect([store.stored().state, store.stored().deferrals]).toEqual(["OFFERED", 1]);
     });
 
+    test("a scale that resets on the offer: the job fails after 3 unanswered offers", async () => {
+        const { store } = setup("CREATED");
+        const d = device();
+        for (let i = 0; i < 3; i++) expect((await offerFor(store, d, OLD, "t", at(i * 120)))![0]).toBe(DOWNLINK_FW_OFFER);
+        expect(await offerFor(store, d, OLD, "t", at(360))).toBeUndefined();
+        expect([store.stored().state, store.stored().lastError]).toEqual(["FAILED", "CRASH_ON_OFFER"]);
+    });
+
+    test("an answered offer resets the count: battery deferrals do not fail the job", async () => {
+        const { store } = setup("CREATED");
+        const d = device();
+        for (let i = 0; i < 6; i++) {
+            expect((await offerFor(store, d, OLD, "t", at(i * 3600)))![0]).toBe(DOWNLINK_FW_OFFER);
+            await onServiceUplink(store, d, report(7, FwStatus.DEFERRED_BATTERY, 3550), "t", at(i * 3600 + 5));
+        }
+        expect([store.stored().state, store.stored().deferrals]).toEqual(["OFFERED", 6]);
+    });
+
     test("chunk index past the end is refused", async () => {
         const { store } = setup("DOWNLOADING", 1000);
         const r = (await onServiceUplink(store, device(), chunkReq(7, 4), "t", at(0)))!;

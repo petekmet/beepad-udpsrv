@@ -57,6 +57,9 @@ export class FwUpdateJob extends BaseEntity {
     public deferrals: number = 0;
 
     @Field()
+    public offersUnanswered: number = 0; // offers repeated while still OFFERED: the scale took none of them
+
+    @Field()
     public lastError: string = "";
 
     @Field()

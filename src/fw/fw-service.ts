@@ -70,6 +70,9 @@ function abortReasonFor(state: FwJobState): FwAbortReason {
     }
 }
 
+// re-sent offers without any answer before the job fails as CRASH_ON_OFFER
+export const MAX_OFFERS_UNANSWERED = 3;
+
 function finish(job: FwUpdateJob, state: FwJobState, now: Date, error?: string) {
     job.state = state;
     job.finishedAt = now;
@@ -161,7 +164,17 @@ export async function offerFor(store: FwStore, device: Device, v: FwVersionTrail
         logger.warn("FW job %d waits: bootloader OTA level %d, image needs %d", job._id, v.blVersion, image.minBlVersion, evt("fw", ctx));
         return undefined;
     }
+    // An offer is only re-sent while the job is still OFFERED, i.e. the scale sent
+    // no report or chunk request for it. Repeated, that is a scale that resets on
+    // the offer (it asks again on every boot); stop before it loops for good.
+    // offersUnanswered counts the re-sent ones, so +1 is the offers so far
+    if (job.state === "OFFERED" && (job.offersUnanswered ?? 0) + 1 >= MAX_OFFERS_UNANSWERED) {
+        logger.warn("FW job %d: %d offers unanswered, scale likely resets on the offer", job._id, (job.offersUnanswered ?? 0) + 1, evt("fw", ctx));
+        await commit(store, job, now, j => finish(j, "FAILED", now, "CRASH_ON_OFFER"));
+        return undefined;
+    }
     const stored = await commit(store, job, now, j => {
+        if (j.state === "OFFERED") j.offersUnanswered = (j.offersUnanswered ?? 0) + 1;
         j.state = "OFFERED";
         if (!j.offeredAt) j.offeredAt = now;
     });
@@ -256,6 +269,7 @@ async function handleReport(store: FwStore, device: Device, job: FwUpdateJob | u
         case FwStatus.DEFERRED_BATTERY:
             stored = await commit(store, job, now, j => {
                 j.deferrals++;
+                j.offersUnanswered = 0; // answered: stays OFFERED for a reason, not a reset
                 j.lastError = `DEFERRED_BATTERY ${detail} mV`;
             });
             break;
