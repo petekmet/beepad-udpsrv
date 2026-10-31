@@ -45,7 +45,7 @@ export enum FwAbortReason {
     COMPLETED = 6,
 }
 
-export const CHUNK_SIZE_DEFAULT = 256;
+export const CHUNK_SIZE_DEFAULT = 448; // a ~970-char URC on the scale; fewer round trips
 export const CHUNK_SIZE_MAX = 448; // device hard limit is 472 (1024-char URC line)
 
 export interface FwVersionTrailer {

@@ -11,6 +11,7 @@ import logger, { evt } from "../utils/logger";
 import { FwVersionTrailer, splitMeasurementFw, UPLINK_MEASUREMENT, UPLINK_MEASUREMENT_FW, UPLINK_SERVICE } from "../fw/fw-protocol";
 import { offerFor, onServiceUplink, onVersionReport } from "../fw/fw-service";
 import { DatastoreFwStore } from "../fw/fw-store";
+import { cacheDevice, cachedDevice } from "./device-cache";
 
 // emits on new datagram msg
 export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo, trace: string): Promise<Buffer | undefined> {
@@ -28,8 +29,14 @@ export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo
 
     // get device properties
     const connection = createConnection({ keyFilename: process.env.GOOGLE_SERVICE_ACCOUNT! });
-    const repostory = connection.getRepository(Device);
-    const d = await repostory.query().filter("address", nbiotComposedAddress).findOne();
+    // service uplinks (FW chunk requests and reports) may use a cached Device, see device-cache.ts
+    const service = packetHeader.packetType == UPLINK_SERVICE;
+    let d = service ? cachedDevice(nbiotComposedAddress) : undefined;
+    if (!d) {
+        const repostory = connection.getRepository(Device);
+        d = await repostory.query().filter("address", nbiotComposedAddress).findOne();
+        if (d) cacheDevice(d);
+    }
 
     if (d) {
         const ctx = { trace, device: d.address, deviceName: d.name, deviceId: d._id };
