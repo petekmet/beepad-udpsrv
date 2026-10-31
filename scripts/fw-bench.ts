@@ -121,10 +121,12 @@ async function createJob(connection: Connection, a: Record<string, string>) {
 
     const jobRepo = connection.getRepository(FwUpdateJob);
     const dfRepo = connection.getRepository(DeviceFirmware);
+    // Datastore allows only ancestor queries inside a transaction, so the
+    // active-job check runs before it; the job sequence is still taken in it
+    const jobs = await jobRepo.query().filter("deviceId", device._id).findMany();
+    const active = jobs.find(j => ACTIVE_JOB_STATES.includes(j.state));
+    if (active) throw new Error(`job ${active._id} (seq ${active.jobSeq}) is ${active.state}; cancel it first`);
     const result = await connection.getTransactionManager({ maxRetry: 2 }).start(async session => {
-        const jobs = await jobRepo.queryWithSession(session).filter("deviceId", device._id).findMany();
-        const active = jobs.find(j => ACTIVE_JOB_STATES.includes(j.state));
-        if (active) throw new Error(`job ${active._id} (seq ${active.jobSeq}) is ${active.state}; cancel it first`);
         const fresh = (await dfRepo.findOneWithSession(device._id, session))!;
         fresh.lastJobSeq = (fresh.lastJobSeq + 1) & 0xffff || 1;
         dfRepo.updateWithSession(fresh, session);
