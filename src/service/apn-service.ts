@@ -8,6 +8,9 @@ import { uplinkPacket, UplinkPacketHeader, uplinkPacketHeader } from "../utils/s
 import { processEmailAlerts } from "./email-service";
 import { createMeasurementFromPacket, saveMeasurementForDevice } from "./measurement-service";
 import logger, { evt } from "../utils/logger";
+import { FwVersionTrailer, splitMeasurementFw, UPLINK_MEASUREMENT, UPLINK_MEASUREMENT_FW, UPLINK_SERVICE } from "../fw/fw-protocol";
+import { offerFor, onServiceUplink, onVersionReport } from "../fw/fw-service";
+import { DatastoreFwStore } from "../fw/fw-store";
 
 // emits on new datagram msg
 export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo, trace: string): Promise<Buffer | undefined> {
@@ -55,7 +58,7 @@ export async function apnServiceGetResponseBuffer(msg: Buffer, info: AddressInfo
     }
 }
 
-async function processUplinkData(
+export async function processUplinkData(
     connection: Connection,
     device: Device,
     packetHeader: UplinkPacketHeader,
@@ -63,29 +66,72 @@ async function processUplinkData(
     trace: string,
     downlinkData?: Buffer
 ): Promise<Buffer | undefined> {
-    if (packetHeader.packetType === 0) {
-        const ctx = { trace, device: device.address, deviceName: device.name, deviceId: device._id };
-        try {
-            const packet = uplinkPacket.decode(new Uint8Array(packetPayload), true);
-           logger.info("Decoded uplink packet type 0 %s", packet, evt("uplink", ctx));
-            if (packet.flags.weatherSensorFault) {
-                logger.warn("WARNING: BME280 weather sensor fault reported; temperature/humidity/pressure are invalid (0)", evt("uplink", ctx));
-            }
-            const measurement = createMeasurementFromPacket(packet, device, trace);
-            if (device.lastMeasurement && device.lastMeasurement.cnt == measurement.cnt) {
-                logger.warn("WARNING: Device duplicate last cnt, no save", evt("uplink", ctx));
-            } else {
-                await processEmailAlerts(connection, device, measurement, trace);
-                saveMeasurementForDevice(connection, device, measurement, packet.flags.downlinkRequest, trace);
+    const ctx = { trace, device: device.address, deviceName: device.name, deviceId: device._id };
+    const key = Buffer.from(device.nwkSKey, "hex");
 
-                if (packet.flags.downlinkRequest && downlinkData) {
-                    const key = Buffer.from(device.nwkSKey, "hex");
-                    return messageWithMac(createDownlinkMessage(packetHeader, downlinkData), key);
-                }
-                logger.info("Measurement on %s saved on %s", new Date(packet.measurementTimestamp * 1000), measurement.asOn, evt("measurement", ctx));
-            }
-        } catch {
-            logger.warn("WARNING: could not decode packet", evt("uplink", ctx));
+    if (packetHeader.packetType === UPLINK_SERVICE) {
+        // firmware update service packet: no measurement, no flags, always answered
+        try {
+            const reply = await onServiceUplink(new DatastoreFwStore(connection), device, packetPayload.subarray(0, packetPayload.length - 4), trace);
+            return reply ? messageWithMac(createDownlinkMessage(packetHeader, reply), key) : undefined;
+        } catch (e) {
+            logger.error("FW service uplink failed: %s", (e as Error)?.stack ?? e, evt("fw", ctx));
+            return undefined;
         }
+    }
+
+    if (packetHeader.packetType !== UPLINK_MEASUREMENT && packetHeader.packetType !== UPLINK_MEASUREMENT_FW) {
+        logger.warn("WARNING: unknown packet type %d", packetHeader.packetType, evt("uplink", ctx));
+        return undefined;
+    }
+
+    // packetType 2 = the type 0 measurement plus a firmware version trailer
+    let measurementPayload = packetPayload;
+    let version: FwVersionTrailer | undefined;
+    if (packetHeader.packetType === UPLINK_MEASUREMENT_FW) {
+        const split = splitMeasurementFw(packetPayload);
+        if (!split) {
+            logger.warn("WARNING: packet type 2 with bad length %d", packetPayload.length, evt("uplink", ctx));
+            return undefined;
+        }
+        measurementPayload = split.measurement;
+        version = split.version;
+    }
+
+    try {
+        const packet = uplinkPacket.decode(new Uint8Array(measurementPayload), true);
+        logger.info("Decoded uplink packet type %d %s", packetHeader.packetType, packet, evt("uplink", ctx));
+        if (packet.flags.weatherSensorFault) {
+            logger.warn("WARNING: BME280 weather sensor fault reported; temperature/humidity/pressure are invalid (0)", evt("uplink", ctx));
+        }
+        const measurement = createMeasurementFromPacket(packet, device, trace);
+        if (device.lastMeasurement && device.lastMeasurement.cnt == measurement.cnt) {
+            logger.warn("WARNING: Device duplicate last cnt, no save", evt("uplink", ctx));
+        } else {
+            await processEmailAlerts(connection, device, measurement, trace);
+
+            // firmware: remember the version, then a pending update offer goes
+            // ahead of Device.downlinkData, which stays queued for a later request
+            let offer: Buffer | undefined;
+            try {
+                const fwStore = new DatastoreFwStore(connection);
+                if (version) await onVersionReport(fwStore, device, version, trace);
+                if (packet.flags.downlinkRequest) offer = await offerFor(fwStore, device, version, trace);
+            } catch (e) {
+                logger.error("FW version/offer handling failed: %s", (e as Error)?.stack ?? e, evt("fw", ctx));
+            }
+            const sendDownlinkData = packet.flags.downlinkRequest && !offer;
+            saveMeasurementForDevice(connection, device, measurement, sendDownlinkData, trace);
+
+            if (offer) {
+                return messageWithMac(createDownlinkMessage(packetHeader, offer), key);
+            }
+            if (sendDownlinkData && downlinkData) {
+                return messageWithMac(createDownlinkMessage(packetHeader, downlinkData), key);
+            }
+            logger.info("Measurement on %s saved on %s", new Date(packet.measurementTimestamp * 1000), measurement.asOn, evt("measurement", ctx));
+        }
+    } catch {
+        logger.warn("WARNING: could not decode packet", evt("uplink", ctx));
     }
 }

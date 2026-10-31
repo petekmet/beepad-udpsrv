@@ -9,7 +9,7 @@ import { ExtSensor } from "../model/ext-sensor.entity";
 import { DateTime, Interval } from "luxon";
 import logger, { evt } from "../utils/logger";
 
-export async function saveMeasurementForDevice(connection: Connection, device: Device, measurement: Measurement, downlinRequested: boolean, trace: string) {
+export async function saveMeasurementForDevice(connection: Connection, device: Device, measurement: Measurement, downlinkDataSent: boolean, trace: string) {
     const ctx = { trace, device: device.address, deviceName: device.name, deviceId: device._id };
     const dateOfMeasurement = measurement.timestamp;
     const timeZone = device.timeZone ? device.timeZone : "Europe/Prague"; // default device timezone
@@ -54,7 +54,7 @@ export async function saveMeasurementForDevice(connection: Connection, device: D
     measurement._ancestorKey = d.getKey();
     measurement = await measurementRepo.insert(measurement);
     device.lastMeasurement = measurement;
-    if(downlinRequested){
+    if(downlinkDataSent){ // only when Device.downlinkData went out (a firmware offer keeps it queued)
         device.downlinkData = "";
     }
 

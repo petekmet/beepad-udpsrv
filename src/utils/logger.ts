@@ -22,7 +22,8 @@ export type LogEvent =
     | "uplink"       // device identification + packet decode
     | "cmac"         // CMAC verification
     | "measurement"  // persisting a measurement
-    | "notification"; // battery / weight-alarm notifications
+    | "notification" // battery / weight-alarm notifications
+    | "fw";          // firmware update over NB-IoT (offer, chunks, reports)
 
 export interface LogFields {
     trace?: string;       // per-datagram correlation id (see newTrace)
