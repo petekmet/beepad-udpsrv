@@ -10,6 +10,7 @@ import {
 import { offerFor, onServiceUplink, onVersionReport, resetFwCachesForTest } from "../src/fw/fw-service";
 import { FwStore } from "../src/fw/fw-store";
 import { uplinkPacket } from "../src/utils/structbuffer";
+import logger from "../src/utils/logger";
 
 // --- in-memory store ---
 
@@ -185,6 +186,7 @@ describe("fw job flow", () => {
         // no more offers once downloading
         expect(await offerFor(store, d, OLD, "t", at(62))).toBeUndefined();
 
+        const info = jest.spyOn(logger, "info") as unknown as jest.Mock;
         const received: Buffer[] = [];
         for (let i = 0; i < 4; i++) {
             const c = (await onServiceUplink(store, d, chunkReq(7, i), "t", at(63 + i)))!;
@@ -196,6 +198,8 @@ describe("fw job flow", () => {
         expect(received[3].length).toBe(1000 - 3 * 256);
         expect(Buffer.concat(received).equals(img.binary)).toBe(true);
         expect(store.stored().nextChunk).toBe(4); // last chunk always written
+        expect(info.mock.calls.some((c: unknown[]) => String(c[0]).startsWith("FW job %d: last chunk served") && c[2] === 4 && c[3] === 4)).toBe(true);
+        info.mockRestore();
 
         await onServiceUplink(store, d, report(7, FwStatus.VERIFIED), "t", at(70));
         expect(store.stored().state).toBe("DOWNLOADED");

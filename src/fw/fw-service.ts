@@ -227,6 +227,8 @@ async function serveChunk(store: FwStore, device: Device, job: FwUpdateJob | und
             j.nextChunk = chunkIdx + 1;
         });
         if (!isActive(stored)) return encodeAbort(jobSeq, abortReasonFor(stored.state));
+        if (last) logger.info("FW job %d: last chunk served (%d/%d), waiting for VERIFIED", job._id, chunkIdx + 1, job.chunksTotal, evt("fw", ctx));
+        else logger.info("FW job %d: chunk %d/%d", job._id, chunkIdx + 1, job.chunksTotal, evt("fw", ctx));
     }
     return encodeChunk(jobSeq, chunkIdx, data);
 }
