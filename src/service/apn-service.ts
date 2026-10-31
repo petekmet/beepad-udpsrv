@@ -142,6 +142,11 @@ export async function processUplinkData(
         if (offer) {
             return messageWithMac(createDownlinkMessage(packetHeader, offer), key);
         }
+        if (packet.flags.downlinkRequest) {
+            // nothing pending: answer with the time (downlink type 0), so the scale
+            // knows its request got through and does not ask again on the next transmit
+            return messageWithMac(createDownlinkMessage(packetHeader), key);
+        }
     } catch {
         logger.warn("WARNING: could not decode packet", evt("uplink", ctx));
     }

@@ -121,8 +121,9 @@ describe("apn-service with firmware update", () => {
         setJob("CREATED");
         const p = withFlags(TYPE0.subarray(17), true);
         const h = uplinkPacketHeader.decode(new Uint8Array(TYPE0.subarray(0, 17)), true);
-        const reply = await processUplinkData({} as any, device(), h, p, "t");
-        expect(reply).toBeUndefined();
+        const reply = (await processUplinkData({} as any, device(), h, p, "t"))!;
+        expect(reply[16]).toBe(0); // no offer: the downlink request is answered with the time
+        checkMac(reply);
         expect(saved).toEqual([{ downlinkDataSent: true }]);
         expect(memory.job!.state).toBe("CREATED");
     });
@@ -143,13 +144,21 @@ describe("duplicate cnt after a reboot", () => {
         checkMac(reply);
     });
 
-    test("duplicate without a job: nothing sent, as before", async () => {
+    test("duplicate without a job: the downlink request gets the time, not the queued downlinkData", async () => {
         const d = device();
         const { header, payload } = type2(true);
         const h = uplinkPacketHeader.decode(new Uint8Array(header), true);
         d.lastMeasurement = { cnt: payload[0] } as any;
-        expect(await processUplinkData({} as any, d, h, payload, "t", Buffer.from("0aabbcc", "hex"))).toBeUndefined();
+        const reply = (await processUplinkData({} as any, d, h, payload, "t", Buffer.from("0aabbcc", "hex")))!;
+        expect(reply[16]).toBe(0); // timestamp; downlinkData stays queued (not saved = not cleared)
         expect(saved.length).toBe(0);
         expect(memory.versions.length).toBe(1);
+    });
+
+    test("no downlink request: nothing sent", async () => {
+        const d = device();
+        const { header, payload } = type2(false);
+        const h = uplinkPacketHeader.decode(new Uint8Array(header), true);
+        expect(await processUplinkData({} as any, d, h, payload, "t")).toBeUndefined();
     });
 });
