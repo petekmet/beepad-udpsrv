@@ -105,31 +105,35 @@ export async function processUplinkData(
             logger.warn("WARNING: BME280 weather sensor fault reported; temperature/humidity/pressure are invalid (0)", evt("uplink", ctx));
         }
         const measurement = createMeasurementFromPacket(packet, device, trace);
-        if (device.lastMeasurement && device.lastMeasurement.cnt == measurement.cnt) {
+        const duplicate = !!device.lastMeasurement && device.lastMeasurement.cnt == measurement.cnt;
+        if (duplicate) {
             logger.warn("WARNING: Device duplicate last cnt, no save", evt("uplink", ctx));
-        } else {
-            await processEmailAlerts(connection, device, measurement, trace);
+        }
 
-            // firmware: remember the version, then a pending update offer goes
-            // ahead of Device.downlinkData, which stays queued for a later request
-            let offer: Buffer | undefined;
-            try {
-                const fwStore = new DatastoreFwStore(connection);
-                if (version) await onVersionReport(fwStore, device, version, trace);
-                if (packet.flags.downlinkRequest) offer = await offerFor(fwStore, device, version, trace);
-            } catch (e) {
-                logger.error("FW version/offer handling failed: %s", (e as Error)?.stack ?? e, evt("fw", ctx));
-            }
+        // firmware: runs for a duplicate cnt too, because the scale restarts its
+        // counter at 0 on every boot, and the first uplink after a boot is the one
+        // that reports a new version and asks for a downlink. A pending update
+        // offer goes ahead of Device.downlinkData, which stays queued.
+        let offer: Buffer | undefined;
+        try {
+            const fwStore = new DatastoreFwStore(connection);
+            if (version) await onVersionReport(fwStore, device, version, trace);
+            if (packet.flags.downlinkRequest) offer = await offerFor(fwStore, device, version, trace);
+        } catch (e) {
+            logger.error("FW version/offer handling failed: %s", (e as Error)?.stack ?? e, evt("fw", ctx));
+        }
+
+        if (!duplicate) {
+            await processEmailAlerts(connection, device, measurement, trace);
             const sendDownlinkData = packet.flags.downlinkRequest && !offer;
             saveMeasurementForDevice(connection, device, measurement, sendDownlinkData, trace);
-
-            if (offer) {
-                return messageWithMac(createDownlinkMessage(packetHeader, offer), key);
-            }
-            if (sendDownlinkData && downlinkData) {
+            if (!offer && sendDownlinkData && downlinkData) {
                 return messageWithMac(createDownlinkMessage(packetHeader, downlinkData), key);
             }
             logger.info("Measurement on %s saved on %s", new Date(packet.measurementTimestamp * 1000), measurement.asOn, evt("measurement", ctx));
+        }
+        if (offer) {
+            return messageWithMac(createDownlinkMessage(packetHeader, offer), key);
         }
     } catch {
         logger.warn("WARNING: could not decode packet", evt("uplink", ctx));

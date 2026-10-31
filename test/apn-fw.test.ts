@@ -127,3 +127,29 @@ describe("apn-service with firmware update", () => {
         expect(memory.job!.state).toBe("CREATED");
     });
 });
+
+describe("duplicate cnt after a reboot", () => {
+    test("version is still reported and the offer still sent, the measurement is not saved", async () => {
+        setJob("CREATED");
+        const d = device();
+        const { header, payload } = type2(true);
+        const h = uplinkPacketHeader.decode(new Uint8Array(header), true);
+        const cnt = payload[0];
+        d.lastMeasurement = { cnt } as any; // the scale restarted its counter
+        const reply = (await processUplinkData({} as any, d, h, payload, "t", Buffer.from("0aabbcc", "hex")))!;
+        expect(saved.length).toBe(0);
+        expect(memory.versions.length).toBe(1);
+        expect(reply[16]).toBe(0x10); // FW_OFFER
+        checkMac(reply);
+    });
+
+    test("duplicate without a job: nothing sent, as before", async () => {
+        const d = device();
+        const { header, payload } = type2(true);
+        const h = uplinkPacketHeader.decode(new Uint8Array(header), true);
+        d.lastMeasurement = { cnt: payload[0] } as any;
+        expect(await processUplinkData({} as any, d, h, payload, "t", Buffer.from("0aabbcc", "hex"))).toBeUndefined();
+        expect(saved.length).toBe(0);
+        expect(memory.versions.length).toBe(1);
+    });
+});
