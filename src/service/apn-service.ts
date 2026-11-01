@@ -8,7 +8,8 @@ import { uplinkPacket, UplinkPacketHeader, uplinkPacketHeader } from "../utils/s
 import { processEmailAlerts } from "./email-service";
 import { createMeasurementFromPacket, saveMeasurementForDevice } from "./measurement-service";
 import logger, { evt } from "../utils/logger";
-import { FwVersionTrailer, splitMeasurementFw, UPLINK_MEASUREMENT, UPLINK_MEASUREMENT_FW, UPLINK_SERVICE } from "../fw/fw-protocol";
+import { FwVersionTrailer, HealthTrailer, splitMeasurementFw, UPLINK_MEASUREMENT, UPLINK_MEASUREMENT_FW, UPLINK_MEASUREMENT_HEALTH, UPLINK_SERVICE } from "../fw/fw-protocol";
+import { onHealthReport } from "./health-service";
 import { offerFor, onServiceUplink, onVersionReport } from "../fw/fw-service";
 import { DatastoreFwStore } from "../fw/fw-store";
 import { cacheDevice, cachedDevice } from "./device-cache";
@@ -87,22 +88,26 @@ export async function processUplinkData(
         }
     }
 
-    if (packetHeader.packetType !== UPLINK_MEASUREMENT && packetHeader.packetType !== UPLINK_MEASUREMENT_FW) {
+    const type = packetHeader.packetType;
+    if (type !== UPLINK_MEASUREMENT && type !== UPLINK_MEASUREMENT_FW && type !== UPLINK_MEASUREMENT_HEALTH) {
         logger.warn("WARNING: unknown packet type %d", packetHeader.packetType, evt("uplink", ctx));
         return undefined;
     }
 
-    // packetType 2 = the type 0 measurement plus a firmware version trailer
+    // packetType 2 = the type 0 measurement plus a firmware version trailer,
+    // packetType 3 = type 2 plus a health trailer
     let measurementPayload = packetPayload;
     let version: FwVersionTrailer | undefined;
-    if (packetHeader.packetType === UPLINK_MEASUREMENT_FW) {
-        const split = splitMeasurementFw(packetPayload);
+    let health: HealthTrailer | undefined;
+    if (type === UPLINK_MEASUREMENT_FW || type === UPLINK_MEASUREMENT_HEALTH) {
+        const split = splitMeasurementFw(packetPayload, type === UPLINK_MEASUREMENT_HEALTH);
         if (!split) {
-            logger.warn("WARNING: packet type 2 with bad length %d", packetPayload.length, evt("uplink", ctx));
+            logger.warn("WARNING: packet type %d with bad length %d", type, packetPayload.length, evt("uplink", ctx));
             return undefined;
         }
         measurementPayload = split.measurement;
         version = split.version;
+        health = split.health;
     }
 
     try {
@@ -125,6 +130,7 @@ export async function processUplinkData(
         try {
             const fwStore = new DatastoreFwStore(connection);
             if (version) await onVersionReport(fwStore, device, version, trace);
+            if (health) await onHealthReport(connection, device, health, trace);
             if (packet.flags.downlinkRequest) offer = await offerFor(fwStore, device, version, trace);
         } catch (e) {
             logger.error("FW version/offer handling failed: %s", (e as Error)?.stack ?? e, evt("fw", ctx));

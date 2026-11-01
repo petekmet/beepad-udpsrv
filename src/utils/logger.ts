@@ -23,7 +23,8 @@ export type LogEvent =
     | "cmac"         // CMAC verification
     | "measurement"  // persisting a measurement
     | "notification" // battery / weight-alarm notifications
-    | "fw";          // firmware update over NB-IoT (offer, chunks, reports)
+    | "fw"           // firmware update over NB-IoT (offer, chunks, reports)
+    | "health";      // scale health trailer: reset cause, modem re-attaches (packetType 3)
 
 export interface LogFields {
     trace?: string;       // per-datagram correlation id (see newTrace)
