@@ -1,4 +1,6 @@
 import { Device } from "../src/model/device";
+import { healthChanged, needsFollowUp, resetCauseName } from "../src/service/health-service";
+import { DeviceHealth } from "../src/model/device-health.entity";
 import { DeviceFirmware } from "../src/model/device-firmware.entity";
 import { FirmwareImage } from "../src/model/firmware-image.entity";
 import { ACTIVE_JOB_STATES, FwJobState, FwUpdateJob } from "../src/model/fw-update-job.entity";
@@ -129,6 +131,30 @@ describe("fw protocol", () => {
         const m2 = uplinkPacket.decode(new Uint8Array(split.measurement), true);
         const m0 = uplinkPacket.decode(new Uint8Array(payload0), true);
         expect(m2).toEqual(m0);
+    });
+
+    test("packetType 3 splits into the type 0 payload, version and health trailers", () => {
+        const trailer = Buffer.from([1, 8, 10, 30, 1, 1, 8, 2, 1, 3]); // 1.8.10+286, level 1; SEND_FAILED, 2 re-attaches, 1 recovered, 3 failed sends
+        const payload3 = Buffer.concat([payload0.subarray(0, 35), trailer, payload0.subarray(35)]);
+        expect(17 + payload3.length).toBe(66);
+        const split = splitMeasurementFw(payload3, true)!;
+        expect(split.measurement.equals(payload0)).toBe(true);
+        expect(split.version).toEqual({ major: 1, minor: 8, patch: 10, build: 286, blVersion: 1 });
+        expect(split.health).toEqual({ resetCause: 8, reattachAttempts: 2, reattachRecovered: 1, failedSends: 3 });
+        expect(splitMeasurementFw(payload3)).toBeUndefined(); // not a type 2 length
+    });
+
+    test("health follow-up and change detection", () => {
+        const quiet = { resetCause: 0, reattachAttempts: 0, reattachRecovered: 0, failedSends: 0 };
+        expect(needsFollowUp(quiet)).toBe(false);
+        expect(needsFollowUp({ ...quiet, resetCause: 21 })).toBe(true);
+        expect(needsFollowUp({ ...quiet, reattachAttempts: 1 })).toBe(true);
+        expect(resetCauseName(21)).toBe("STALL");
+        expect(resetCauseName(99)).toBe("UNKNOWN_99");
+        expect(healthChanged(undefined, quiet)).toBe(true);
+        const stored = Object.assign(new DeviceHealth(), { lastResetCause: 0, reattachAttempts: 0, reattachRecovered: 0, failedSends: 0 });
+        expect(healthChanged(stored, quiet)).toBe(false);
+        expect(healthChanged(stored, { ...quiet, failedSends: 1 })).toBe(true);
     });
 
     test("packetType 2 with the wrong length is rejected", () => {

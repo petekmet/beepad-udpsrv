@@ -8,6 +8,7 @@
 export const UPLINK_MEASUREMENT = 0;
 export const UPLINK_SERVICE = 1;
 export const UPLINK_MEASUREMENT_FW = 2; // measurement + 6-byte firmware version trailer
+export const UPLINK_MEASUREMENT_HEALTH = 3; // type 2 + 4-byte health trailer
 
 // service uplink commands (first payload byte of packetType 1)
 export const FW_CHUNK_REQ = 0x10;
@@ -56,24 +57,36 @@ export interface FwVersionTrailer {
     blVersion: number; // bootloader OTA capability, 0 = stock bootloader
 }
 
+/** Scale health since its last boot (packetType 3), counters saturate at 255. */
+export interface HealthTrailer {
+    resetCause: number;        // why the scale last restarted, RESET_CAUSE_* in the firmware's resetcause.h
+    reattachAttempts: number;  // modem re-attaches (radio off/on) after a failed exchange
+    reattachRecovered: number; // re-attaches after which the retried send went out
+    failedSends: number;       // exchanges the modem failed
+}
+
 export const MEASUREMENT_BODY_SIZE = 35; // packetType 0 payload without its 4-byte CMAC
 export const FW_TRAILER_SIZE = 6;
+export const HEALTH_TRAILER_SIZE = 4;
 
 /**
- * Split a packetType 2 payload (everything after the 17-byte header, CMAC
- * included) into a packetType 0 payload and the version trailer, so the
- * measurement goes through the existing decoder unchanged.
+ * Split a packetType 2 or 3 payload (everything after the 17-byte header, CMAC
+ * included) into a packetType 0 payload and the trailers, so the measurement
+ * goes through the existing decoder unchanged.
  */
-export function splitMeasurementFw(payload: Buffer): { measurement: Buffer; version: FwVersionTrailer } | undefined {
-    if (payload.length !== MEASUREMENT_BODY_SIZE + FW_TRAILER_SIZE + 4) return undefined;
-    const t = payload.subarray(MEASUREMENT_BODY_SIZE, MEASUREMENT_BODY_SIZE + FW_TRAILER_SIZE);
+export function splitMeasurementFw(payload: Buffer, withHealth = false): { measurement: Buffer; version: FwVersionTrailer; health?: HealthTrailer } | undefined {
+    const trailers = FW_TRAILER_SIZE + (withHealth ? HEALTH_TRAILER_SIZE : 0);
+    if (payload.length !== MEASUREMENT_BODY_SIZE + trailers + 4) return undefined;
+    const t = payload.subarray(MEASUREMENT_BODY_SIZE, MEASUREMENT_BODY_SIZE + trailers);
     const measurement = Buffer.concat([
         payload.subarray(0, MEASUREMENT_BODY_SIZE),
-        payload.subarray(MEASUREMENT_BODY_SIZE + FW_TRAILER_SIZE),
+        payload.subarray(MEASUREMENT_BODY_SIZE + trailers),
     ]);
+    const h = t.subarray(FW_TRAILER_SIZE);
     return {
         measurement,
         version: { major: t[0], minor: t[1], patch: t[2], build: t.readUInt16LE(3), blVersion: t[5] },
+        health: withHealth ? { resetCause: h[0], reattachAttempts: h[1], reattachRecovered: h[2], failedSends: h[3] } : undefined,
     };
 }
 
