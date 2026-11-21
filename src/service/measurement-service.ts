@@ -72,6 +72,12 @@ export function createMeasurementFromPacket(packet: UplinkPacket, device: Device
     measurement.asOn = new Date();
     measurement.timestamp = dateOfMeasurement;
     measurement.weight = ((packet.weight0 + packet.weight1 + packet.weight2 + packet.weight3) / 100) - device.zeroWeight;
+    // keep the four corners too (1/100 kg on the wire), so a dead, stuck or drifting cell
+    // can be told apart from a real weight change; admin-api analyses them
+    measurement.weight0 = packet.weight0 / 100;
+    measurement.weight1 = packet.weight1 / 100;
+    measurement.weight2 = packet.weight2 / 100;
+    measurement.weight3 = packet.weight3 / 100;
     measurement.temperature = packet.temperature / 10;
     measurement.humidity = packet.humidity;
     measurement.pressure = packet.pressure;
