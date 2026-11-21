@@ -37,6 +37,22 @@ describe("other tests", () => {
         expect(m.alarm).toBe(false);
     });
 
+    test("keeps the four load cell readings in kg next to the total", () => {
+        const up = uplinkPacket.decode(b(rawHexaString), true);
+        up.weight0 = 1234;
+        up.weight1 = -5;
+        up.weight2 = 0;
+        up.weight3 = 1234;
+        const device = new Device();
+        device.zeroWeight = 3.3;
+        const m = createMeasurementFromPacket(up, device, "test");
+        expect(m.weight0).toBeCloseTo(12.34);
+        expect(m.weight1).toBeCloseTo(-0.05);
+        expect(m.weight2).toBe(0);
+        expect(m.weight3).toBeCloseTo(12.34);
+        expect(m.weight).toBeCloseTo(24.63 - 3.3);
+    });
+
     test("luxon api", () => {
         const timestamp = DateTime.fromSeconds(1655965800); // UTC 6 hour, Europe/Prague 8 hours
         const localTimestamp = timestamp.setZone("Europe/Prague");

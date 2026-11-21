@@ -35,6 +35,19 @@ export class Measurement extends BaseEntity{
     public asOn: Date; // timestamp of when Measurement entered our system
     @Field()
     public weight: number = 0;
+    // Per load cell readings in kg as the scale sent them (no zero weight subtracted).
+    // Cell 0..3 = top-right, bottom-right, bottom-left, top-left (Bluetooth page mapping).
+    // A cell that isn't fitted reads exactly 0; a cell marked failed (BLE/downlink 0x0E)
+    // carries a copy of another installed cell's value. Absent on rows stored before
+    // this change and on LoRa (gw-srv) rows.
+    @Field()
+    public weight0?: number;
+    @Field()
+    public weight1?: number;
+    @Field()
+    public weight2?: number;
+    @Field()
+    public weight3?: number;
     @Field()
     public temperature: number =0;
     @Field()
