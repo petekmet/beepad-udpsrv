@@ -88,3 +88,39 @@ describe("other tests", () => {
         expect(result.getTime()).toBe(now.getTime());
     });
 });
+describe("scale clock off", () => {
+    function packetAt(seconds: number): any {
+        return {
+            measurementTimestamp: seconds,
+            weight0: 1000, weight1: 1000, weight2: 1000, weight3: 1000,
+            temperature: 200, humidity: 50, pressure: 1000,
+            batterySoc: { batteryLevel: 3900, status: 0 },
+            sequenceId: 1, signalStrength: -80,
+            flags: { downlinkRequest: false, restart: false, shutdown: false },
+            extSensor: { sensorFlags: { sensorFound: false } },
+        };
+    }
+    const device = { _id: 1, address: "a", name: "n", zeroWeight: 0 } as any as Device;
+
+    test("a good clock keeps its time and no deviceTimestamp", () => {
+        const t = Math.trunc(Date.now() / 1000) - 3600;
+        const m = createMeasurementFromPacket(packetAt(t), device, "t");
+        expect(m.timestamp.getTime()).toBe(t * 1000);
+        expect(m.deviceTimestamp).toBeUndefined();
+        expect(m.asOn.getTime()).toBeGreaterThan(m.timestamp.getTime());
+    });
+
+    test("a clock 97 days behind is filed at arrival, scale time kept", () => {
+        const t = Math.trunc(Date.now() / 1000) - 97 * 86400;
+        const m = createMeasurementFromPacket(packetAt(t), device, "t");
+        expect(m.timestamp.getTime()).toBe(m.asOn.getTime());
+        expect(m.deviceTimestamp!.getTime()).toBe(t * 1000);
+    });
+
+    test("a clock a day ahead is filed at arrival, scale time kept", () => {
+        const t = Math.trunc(Date.now() / 1000) + 86400;
+        const m = createMeasurementFromPacket(packetAt(t), device, "t");
+        expect(m.timestamp.getTime()).toBe(m.asOn.getTime());
+        expect(m.deviceTimestamp!.getTime()).toBe(t * 1000);
+    });
+});

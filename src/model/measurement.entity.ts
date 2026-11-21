@@ -33,6 +33,10 @@ export class Measurement extends BaseEntity{
     public timestamp: Date; // timestamp of when Measurement was executed (from on-device clock)
     @Field({index: true})
     public asOn: Date; // timestamp of when Measurement entered our system
+    // The scale's own measurement time, set only when its clock was too far off to use
+    // (more than 1 day behind or 1 hour ahead); timestamp is then the arrival time.
+    @Field()
+    public deviceTimestamp?: Date;
     @Field()
     public weight: number = 0;
     // Per load cell readings in kg as the scale sent them (no zero weight subtracted).

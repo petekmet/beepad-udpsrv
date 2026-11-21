@@ -66,11 +66,17 @@ export async function saveMeasurementForDevice(connection: Connection, device: D
 
 export function createMeasurementFromPacket(packet: UplinkPacket, device: Device, trace: string): Measurement {
     const asOf = new Date(packet.measurementTimestamp * 1000);
-    // if class < 3 -> check delta (dateOf, dateOn) > 8 hours -> use dateOf = dateOn else dateOf = dateOf
-    const dateOfMeasurement = createDateOfMeasurement(asOf, new Date(), { trace, device: device.address, deviceName: device.name, deviceId: device._id });
+    const now = new Date();
+    // A scale clock more than a day behind or an hour ahead is not trusted: the row is
+    // filed under the arrival time, and the scale's own time is kept in deviceTimestamp
+    // so the admin can see the clock is off (Measure then equals Received).
+    const dateOfMeasurement = createDateOfMeasurement(asOf, now, { trace, device: device.address, deviceName: device.name, deviceId: device._id });
     const measurement = new Measurement();
-    measurement.asOn = new Date();
+    measurement.asOn = now;
     measurement.timestamp = dateOfMeasurement;
+    if (dateOfMeasurement !== asOf) {
+        measurement.deviceTimestamp = asOf;
+    }
     measurement.weight = ((packet.weight0 + packet.weight1 + packet.weight2 + packet.weight3) / 100) - device.zeroWeight;
     // keep the four corners too (1/100 kg on the wire), so a dead, stuck or drifting cell
     // can be told apart from a real weight change; admin-api analyses them
